@@ -27,7 +27,7 @@ db.exec(`
     completed BOOLEAN DEFAULT 0,
     game TEXT,
     platform TEXT,
-    missable BOOLEAN,
+    missable BOOLEAN DEFAULT 0,
     location TEXT
   );
 
@@ -65,14 +65,15 @@ app.get('/api/achievements', (req, res) => {
 
 // Optional: Add a new quest
 app.post('/api/quests', (req, res) => {
-  const { title, description, game, platform, missable, location } = req.body;
+  const { title, description, game, platform, location } = req.body;
   try {
     const stmt = db.prepare(
-      'INSERT INTO quests (title, description, game, platform, missable, location) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO quests (title, description, game, platform, location) VALUES (?, ?, ?, ?, ?)'
     );
-    const info = stmt.run(title, description, game, platform, missable, location);
+    const info = stmt.run(title, description, game, platform, location);
     res.status(201).json({ id: info.lastInsertRowid });
   } catch (err) {
+    console.error('Insert error:', err)
     res.status(400).json({ error: err.message });
   }
 });

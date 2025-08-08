@@ -5,32 +5,43 @@ function AddQuest() {
     const [newDescription, setNewDescription] = useState("")
     const [gameName, setGameName] = useState("")
     const [gamePlatform, setGamePlatform] = useState("")
-    const [location, setLocation] = useState("")
+    const [newLocation, setNewLocation] = useState("")
 
-    const addQuest = async () => {
-        fetch('http://localhost:3001/api/quests',
-            {
-                method: 'POST',
-                body: JSON.stringify({
-                'Title': newTitle,
-                'Description': newDescription,
-                'Game': gameName,
-                'Platform': gamePlatform,
-                'Location': location
-                }),
-            })
-        .then(response => response.json())
-        resetForm();
-    };
+    const addNewQuest = async () => {
+        try{
+            const res = await fetch('http://localhost:3001/api/quests', {
+                    method: 'POST',
+                    headers: {
+                        "Content-type": "application/json"
+                    },
+                    body: JSON.stringify({
+                    'title': newTitle,
+                    'description': newDescription,
+                    'game': gameName,
+                    'platform': gamePlatform,
+                    'location': newLocation
+                    }),
+                });
+            
+            if (!res.ok) {
+                throw new Error(`Server error ${res.status}`)
+            } 
+            const data = await res.json();
+            console.log('Quest added:', data);
 
-}
+            resetForm();
+
+            } catch (error) {
+                console.error('Failed to add quest:', error)
+            }
+        };
 
     const resetForm = ()  => {
         setNewTitle("");
         setNewDescription("");
         setGameName("");
         setGamePlatform("");
-        setLocation("");
+        setNewLocation("");
     };
 
     return(
@@ -48,5 +59,28 @@ function AddQuest() {
                 value={newDescription}
                 onChange={(q) => setNewDescription(q.target.value)}
             />
+            <input
+                type='text'
+                placeholder="Game"
+                value={gameName}
+                onChange={(q) => setGameName(q.target.value)}
+            />
+            <input
+                type='text'
+                placeholder="Platform"
+                value={gamePlatform}
+                onChange={(q) => setGamePlatform(q.target.value)}
+            />
+            <input
+                type='text'
+                placeholder="Location"
+                value={newLocation}
+                onChange={(q) => setNewLocation(q.target.value)}
+            />
+            <button onClick={addNewQuest}>Submit</button>
+            <button onClick={resetForm}>Cancel</button>
         </div>
-    )
+    );
+    }
+
+    export default AddQuest;

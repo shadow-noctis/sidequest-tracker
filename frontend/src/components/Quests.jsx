@@ -15,7 +15,7 @@ function QuestList() {
             console.error('Error fetching quests:', err);
             setLoading(false);
         });
-    }, []);
+    });
 
     if (loading) return <p>Loading quests...</p>;
 
