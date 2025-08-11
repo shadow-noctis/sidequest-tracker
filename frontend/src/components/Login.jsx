@@ -3,8 +3,9 @@ import React, { useState} from 'react'
 function Login() {
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
+    const [message, setMessage] = useState("")
 
-    async function loginUser(username, password) {
+    async function loginUser() {
         try {
             const res = await fetch('http://localhost:3001/api/login', {
                 method: 'POST',
@@ -14,7 +15,7 @@ function Login() {
                 body: JSON.stringify({ username, password }),
             });
 
-            if (!Response.ok) {
+            if (!res.ok) {
                 throw new Error (`Login failed: ${response.status}`);
             }
 
@@ -46,4 +47,4 @@ function Login() {
     );
 }
 
-export default Login
+export default Login;
