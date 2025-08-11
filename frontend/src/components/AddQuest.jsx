@@ -6,6 +6,8 @@ function AddQuest() {
     const [gameName, setGameName] = useState("")
     const [gamePlatform, setGamePlatform] = useState("")
     const [newLocation, setNewLocation] = useState("")
+    const [newHint, setNewHint] = useState("")
+    const [newRequirement, setNewRequirement] = useState("")
 
     const addNewQuest = async () => {
         try{
@@ -19,7 +21,9 @@ function AddQuest() {
                     'description': newDescription,
                     'game': gameName,
                     'platform': gamePlatform,
-                    'location': newLocation
+                    'location': newLocation,
+                    'hint': newHint,
+                    'requirement':newRequirement
                     }),
                 });
             
@@ -42,6 +46,8 @@ function AddQuest() {
         setGameName("");
         setGamePlatform("");
         setNewLocation("");
+        setNewHint("");
+        setNewRequirement("");
     };
 
     return(
@@ -77,6 +83,19 @@ function AddQuest() {
                 value={newLocation}
                 onChange={(q) => setNewLocation(q.target.value)}
             />
+            <input
+                type='text'
+                placeholder="Requirement"
+                value={newRequirement}
+                onChange={(q) => setNewRequirement(q.target.value)}
+            />
+            <input
+                type='text'
+                placeholder="Hint"
+                value={newHint}
+                onChange={(q) => setNewHint(q.target.value)}
+            />
+            <br />
             <button onClick={addNewQuest}>Submit</button>
             <button onClick={resetForm}>Cancel</button>
         </div>

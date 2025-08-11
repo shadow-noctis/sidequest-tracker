@@ -27,10 +27,11 @@ function QuestList() {
                     <li key={quest.id}>
                         <strong>{quest.title}</strong>
                         <ul>
-                            <li>{quest.description}</li>
-                            <li>{quest.location}</li>
-                            <li>{quest.completed ? ' 🗹' : ' ✗'}</li>
-                            <li>{quest.missable ? 'Yes' : 'No'}</li>
+                            <li>Description: {quest.description}</li>
+                            <li>Location: {quest.location}</li>
+                            <li>Requirements: {quest.requirement}</li>
+                            <li>Completed: {quest.completed ? ' 🗹' : ' ✗'}</li>
+                            <li>Missable: {quest.missable ? 'Yes' : '✗'}</li>
                         </ul>
                     </li>
                 ))}

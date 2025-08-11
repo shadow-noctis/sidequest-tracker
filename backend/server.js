@@ -1,8 +1,12 @@
 // server.js
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const Database = require('better-sqlite3');
 const fs = require('fs');
+const bcrypt = require("bcrypt")
+const jwt = require('jsonwebtoken')
+const jwtSecret = process.env.JWT_SECRET;
 
 const app = express();
 const PORT = 3001;
@@ -28,7 +32,9 @@ db.exec(`
     game TEXT,
     platform TEXT,
     missable BOOLEAN DEFAULT 0,
-    location TEXT
+    location TEXT,
+    requirement TEXT,
+    hint TEXT
   );
 
   CREATE TABLE IF NOT EXISTS achievements (
@@ -38,6 +44,12 @@ db.exec(`
     unlocked BOOLEAN DEFAULT 0,
     game TEXT,
     platform TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL
   );
 `);
 
@@ -63,7 +75,7 @@ app.get('/api/achievements', (req, res) => {
   }
 });
 
-// Optional: Add a new quest
+// Add a new quest
 app.post('/api/quests', (req, res) => {
   const { title, description, game, platform, location } = req.body;
   try {
@@ -76,6 +88,42 @@ app.post('/api/quests', (req, res) => {
     console.error('Insert error:', err)
     res.status(400).json({ error: err.message });
   }
+});
+
+// Register
+app.post('/api/register', async (req, res) => {
+  const { username, password, confirmPassword} = req.body;
+  const passwordHash = await bcrypt.hash(password, 10)
+  if (!username || !password || !confirmPassword) {
+    return res.status(400).json({ message: "Please fill all required fields." });
+  }
+  if (password !== confirmPassword) {
+    return res.status(400).json({ message: "Passwords don't match"})
+  }
+  try {
+    const stmt = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)');
+    stmt.run(username, passwordHash);
+    res.status(201).json({ message: 'User registered' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+
+});
+
+// Login
+app.post('/api/login', (req, res) => {
+  const {username, password } = req.body;
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  if (!user) return res.status(401).json({ error: 'Invalid credentials'});
+  bcrypt.compare(password, user.password_hash, (err, result) => {
+    if (result) {
+      const token = jwt.sign({ id: user.id, username: user.username}, jwtSecret, {expiresIn: '1h'});
+      res.json({ token })
+    } else {
+      res.status(401).json({ error: 'Invalid credentials'})
+    }
+
+  });
 });
 
 // Optional: Mark quest as completed
