@@ -28,13 +28,13 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     description TEXT,
-    completed BOOLEAN DEFAULT 0,
-    game TEXT,
+    game TEXT NOT NULL,
     platform TEXT,
     missable BOOLEAN DEFAULT 0,
     location TEXT,
     requirement TEXT,
     hint TEXT
+    extras JSON
   );
 
   CREATE TABLE IF NOT EXISTS achievements (
@@ -51,16 +51,35 @@ db.exec(`
   username TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS user_quests (
+      user_id INTEGER,
+      quest_id INTEGER,
+      completed INTEGER DEFAULT 0,
+      PRIMARY KEY (user_id, quest_id),
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (quest_id) REFERENCES quests(id)
+  );
 `);
 
 // ROUTES
 
 // Get all quests
-app.get('/api/quests', (req, res) => {
+app.get('/api/quests', authenticateToken, (req, res) => {
+  const userId = req.user.id;
+
   try {
-    const quests = db.prepare('SELECT * FROM quests').all();
+    const quests = db.prepare(`
+      SELECT q.*,
+             IFNULL(uq.completed, 0) AS completed
+      FROM quests q
+      LEFT JOIN user_quests uq 
+             ON q.id = uq.quest_id AND uq.user_id = ?
+    `).all(userId).map(q => ({ ...q, completed: !!q.completed })); // convert to Boolean
+
     res.json(quests);
   } catch (err) {
+    console.error('Error fetching quests:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -112,34 +131,80 @@ app.post('/api/register', async (req, res) => {
 
 // Login
 app.post('/api/login', (req, res) => {
-  const {username, password } = req.body;
+  const { username, password } = req.body;
+  console.log(username)
   const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-  if (!user) return res.status(401).json({ error: 'Invalid credentials'});
+
+  if (!user) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+
   bcrypt.compare(password, user.password_hash, (err, result) => {
-    if (result) {
-      const token = jwt.sign({ id: user.id, username: user.username}, jwtSecret, {expiresIn: '1h'});
-      res.json({ token })
-    } else {
-      res.status(401).json({ error: 'Invalid credentials'})
+    if (err) {
+      return res.status(500).json({ error: 'Server error' });
     }
 
+    if (!result) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+
+    // ✅ Only create token once and send once
+    console.log('JWT payload:', { id: user.id, username: user.username });
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+
+    res.json({ token });
   });
 });
 
-// Optional: Mark quest as completed
-app.put('/api/quests/:id/complete', (req, res) => {
-  const { id } = req.params;
+// Mark quest as completed
+app.post('/api/quests/:id/complete', authenticateToken, (req, res) => {
+  const questId = req.params.id;
+  const userId = req.user.id;
+  const completed = req.body.completed ? 1 : 0;
+
   try {
-    const stmt = db.prepare('UPDATE quests SET completed = 1 WHERE id = ?');
-    const info = stmt.run(id);
-    if (info.changes === 0) {
-      return res.status(404).json({ error: 'Quest not found' });
-    }
-    res.json({ success: true });
+    const stmt = db.prepare(`
+      INSERT INTO user_quests (user_id, quest_id, completed)
+      VALUES (?, ?, ?)
+      ON CONFLICT(user_id, quest_id) DO UPDATE SET completed = ?
+    `);
+    stmt.run(userId, questId, completed, completed);
+
+    res.json({ message: `Quest marked as ${completed ? 'completed' : 'not completed'}` });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error updating quest:', err);
+    res.status(400).json({ error: err.message });
   }
 });
+
+app.get('/api/user/quests', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const stmt = db.prepare(`
+        SELECT q.*, uq.completed
+        FROM quests q
+        LEFT JOIN user_quests uq
+        ON q.id = uq.quest_id AND uq.user_id = ?
+    `);
+    const quests = stmt.all(userId);
+    res.json(quests);
+});
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token provided' });
+
+  jwt.verify(token, jwtSecret, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+}
+module.exports = authenticateToken;
 
 // Start server
 app.listen(PORT, () => {

@@ -16,15 +16,23 @@ function Login() {
             });
 
             if (!res.ok) {
-                throw new Error (`Login failed: ${response.status}`);
+                throw new Error (`Login failed: ${res.status}`);
             }
 
             const data = await res.json();
+            console.log(data.token)
             localStorage.setItem('token', data.token);
+            setMessage("Login succesful!")
+            resetForm()
             return data;
         } catch (error) {
             console.error('Login error:', error);
         }
+    }
+
+    function resetForm() {
+        setPassword("")
+        setUsername("")
     }
 
     return(
@@ -43,6 +51,7 @@ function Login() {
                 onChange={(q) => setPassword(q.target.value)}
             />
             <button onClick={loginUser}>Login</button>
+            <p>{message}</p>
         </>
     );
 }
