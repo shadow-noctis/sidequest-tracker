@@ -9,18 +9,21 @@ function AddQuest() {
     const [newHint, setNewHint] = useState("")
     const [newRequirement, setNewRequirement] = useState("")
 
+    const token = localStorage.getItem('token');
+
     const addNewQuest = async () => {
         try{
             const res = await fetch('http://localhost:3001/api/quests', {
                     method: 'POST',
                     headers: {
-                        "Content-type": "application/json"
+                        "Content-type": "application/json",
+                        'Authorization': `Bearer ${token}`,
                     },
                     body: JSON.stringify({
                     'title': newTitle,
                     'description': newDescription,
-                    'game': gameName,
-                    'platform': gamePlatform,
+                    'gameName': gameName,
+                    'platformName': gamePlatform,
                     'location': newLocation,
                     'hint': newHint,
                     'requirement':newRequirement

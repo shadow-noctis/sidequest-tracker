@@ -1,17 +1,18 @@
 # Side quest Tracker
 
 ## Overview
-*(Learning project:)* A spoiler-free sidequest tracker allowing users to view important information for a game and mark the quest finished for tracking their progress.
+*(Learning project:)* A spoiler-free sidequest tracker allowing users to view information about sidequests for a game and mark the quest finished for tracking their progress.
 
 # Features
 - List quests
+- login
+- Mark quests done (Only logged in users)
 
 ## Planned features
 - List quests related to a game
-- Mark quest done if finished
 - Helpful tip (viewed only by request)
 - Addition of achievements
-- login feature
+- Logout
 
 ## Tech Stack
 - **Frontend**: React + Vite

@@ -24,11 +24,12 @@ function Register() {
                 throw new Error(`Server error ${res.status}`)
             }
             const data = await res.json();
-            setMessage(`User "${data.username}" registered successfully!`);
+            setMessage(`${newUsername} registered successfully!`);
 
             //Reset form
             setNewUsername("")
             setNewPassword("")
+            setConfirmPassword("")
 
         } catch (error) {
             console.error('Failed to register:', error)

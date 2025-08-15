@@ -24,17 +24,29 @@ const db = new Database('./data/quest_tracker.db');
 
 // Initialize tables if they don't exist
 db.exec(`
+  CREATE TABLE IF NOT EXISTS games (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT UNIQUE,
+  publisher TEXT,
+  release_date DATE
+  );
+
+  CREATE TABLE IF NOT EXISTS platforms (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT UNIQUE,
+  manufacturer TEXT
+  );  
+  
   CREATE TABLE IF NOT EXISTS quests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_id INTEGER,
     title TEXT NOT NULL,
     description TEXT,
-    game TEXT NOT NULL,
-    platform TEXT,
     missable BOOLEAN DEFAULT 0,
     location TEXT,
     requirement TEXT,
-    hint TEXT
-    extras JSON
+    hint TEXT,
+    FOREIGN KEY (game_id) REFERENCES games(id)
   );
 
   CREATE TABLE IF NOT EXISTS achievements (
@@ -42,14 +54,17 @@ db.exec(`
     name TEXT NOT NULL,
     description TEXT,
     unlocked BOOLEAN DEFAULT 0,
-    game TEXT,
-    platform TEXT
+    game_id INTEGER,
+    platform_id INTEGER,
+    FOREIGN KEY (game_id) REFERENCES games(id),
+    FOREIGN KEY (platform_id) REFERENCES platforms(id)
   );
 
   CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL
+  password_hash TEXT NOT NULL,
+  role TEXT DEFAULT 'user'
   );
 
   CREATE TABLE IF NOT EXISTS user_quests (
@@ -60,13 +75,56 @@ db.exec(`
       FOREIGN KEY (user_id) REFERENCES users(id),
       FOREIGN KEY (quest_id) REFERENCES quests(id)
   );
+
+  CREATE TABLE IF NOT EXISTS game_platform (
+    game_id INTEGER,
+    platform_id INTEGER,
+    PRIMARY KEY(game_id, platform_id),
+    FOREIGN KEY (game_id) REFERENCES games(id),
+    FOREIGN KEY (platform_id) REFERENCES platforms(id)
+  )
 `);
+
+//Create admin
+function createAdmin() {
+  const username = process.env.ADMIN_USERNAME
+  const password = process.env.ADMIN_PASSWORD
+
+  if (!username || !password) {
+    console.warn("Admin credentials missing in .env: Admin not created")
+    return;
+  }
+
+  const existing = db.prepare("SELECT * FROM users WHERE username = ?").get(username);
+
+  if(!existing) {
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    db.prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin')")
+      .run(username, hashedPassword)
+    console.log(`Adming user '${username}' created.`)
+  } else {
+    console.log(`User '${username}' already exists`)
+  }
+}
+
+createAdmin();
 
 // ROUTES
 
 // Get all quests
-app.get('/api/quests', authenticateToken, (req, res) => {
-  const userId = req.user.id;
+app.get('/api/quests', (req, res) => {
+  let userId = null;
+
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded =jwt.verify(token, jwtSecret);
+      userId = decoded.id
+    } catch (err) {
+
+    }
+  }
 
   try {
     const quests = db.prepare(`
@@ -95,19 +153,43 @@ app.get('/api/achievements', (req, res) => {
 });
 
 // Add a new quest
-app.post('/api/quests', (req, res) => {
-  const { title, description, game, platform, location } = req.body;
+app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
+  const { title, description, requirement, location, missable, gameName, platformName } = req.body;
   try {
-    const stmt = db.prepare(
-      'INSERT INTO quests (title, description, game, platform, location) VALUES (?, ?, ?, ?, ?)'
-    );
-    const info = stmt.run(title, description, game, platform, location);
-    res.status(201).json({ id: info.lastInsertRowid });
-  } catch (err) {
-    console.error('Insert error:', err)
-    res.status(400).json({ error: err.message });
-  }
-});
+    const gameStmt = db.prepare(`
+      INSERT INTO games (name) VALUES (?)
+      ON CONFLICT(name) DO NOTHING
+      `);
+      gameStmt.run(gameName)
+
+      const game = db.prepare(`SELECT id FROM games WHERE name = ?`)
+
+      const platformStmt = db.prepare(`
+        INSERT INTO platforms (name) VALUES (?)
+        ON CONFLICT (name)  DO NOTHING
+        `);
+        platformStmt.run(platformName)
+
+        const platform = db.prepare(`SELECT id FROM platforms WHERE name = ?`).get(platformName)
+
+        const gpStmt =  db.prepare(`
+          INSERT INTO game_platform (game_id, platform_id) VALUES (?, ?)
+          ON CONFLICT(game_id, platform_id) DO NOTHING
+          `);
+          gpStmt.run(game.id, platform.id);
+
+          const questStmt = db.prepare(`
+              INSERT INTO quests (game_id, title, description, requirement, location, missable)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `);
+          const info = questStmt.run(game.id, title, description, requirement, location, missable);
+          res.status(201).json({ id: info.lastInsertRowid, message: 'Quest added succesfully' });
+    } catch (err) {
+      console.error('Error adding quest: ', err);
+      res.status(500).json({ error: err.message})
+    }
+  });
+
 
 // Register
 app.post('/api/register', async (req, res) => {
@@ -149,9 +231,9 @@ app.post('/api/login', (req, res) => {
     }
 
     // ✅ Only create token once and send once
-    console.log('JWT payload:', { id: user.id, username: user.username });
+    console.log('JWT payload:', { id: user.id, username: user.username, role: user.role });
     const token = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, username: user.username, role: user.role},
       jwtSecret,
       { expiresIn: '1h' }
     );
@@ -192,6 +274,14 @@ app.get('/api/user/quests', authenticateToken, (req, res) => {
     const quests = stmt.all(userId);
     res.json(quests);
 });
+
+function requireRole(role) {
+  return (req, res, next) => {
+    if (!req.user) return res.sendStatus(401);
+    if (req.user.role !== role) return res.sendStatus(403);
+    next()
+  };
+}
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
