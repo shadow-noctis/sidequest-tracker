@@ -238,6 +238,37 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
     }
   });
 
+// Update quest
+app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) => {
+  const { id } = req.params;
+  const { title, description, requirement, location, missable, hint} = req.body
+
+  try {
+    const stmt = db.prepare(`
+      UPDATE quests
+      SET title = ?, descrpition = ?, requirement = ?, location = ?, missable = ?, hint = ?
+      WHERE id = ?
+      `);
+      const info = stmt.run(title, description, requirement, location, missable, hint, id)
+      if (info.changes === 0) return res. status(404).json({error: 'Quest not found'});
+      res.json({ message: 'Quest updated succesfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete quest
+app.delete('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) => {
+  const { id } = req.params;
+  try{
+    const stmt = db.prepare(`DELETE FROM quests WHERE id = ?`);
+    const info = stmt.run(id);
+    if (info.changes === 0) return res.status(404).json({ error: 'Quest not found'});
+    res.json({ message: 'Quest deleted succesfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Register
 app.post('/api/register', async (req, res) => {

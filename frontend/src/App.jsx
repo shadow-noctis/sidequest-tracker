@@ -30,8 +30,7 @@ export default function App() {
         <div>
           <ul className="header">
             <li><NavLink to='/'>Home</NavLink></li>
-            <li><NavLink to="/quests">Quests</NavLink></li>
-            <li><NavLink to="/games">Games</NavLink></li>
+            <li><NavLink to="/games">Quests</NavLink></li>
             {user?.role === 'admin' && (<li><NavLink to="/add">Add Quest</NavLink></li>)}
             {!user ? (
             <>
