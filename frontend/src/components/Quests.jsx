@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom'
 
 function QuestList() {
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { gameId } = useParams();
 
   const token = localStorage.getItem('token');
 
@@ -35,7 +38,7 @@ function QuestList() {
 
   // Fetch quests on mount
   useEffect(() => {
-    fetch('http://localhost:3001/api/quests', {
+    fetch(`http://localhost:3001/api/games/${gameId}/quests`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -47,7 +50,7 @@ function QuestList() {
         console.error('Error fetching quests:', err);
         setLoading(false);
       });
-  }, [token]);
+  }, [gameId, token]);
 
   if (loading) return <p>Loading quests...</p>;
 
@@ -73,6 +76,7 @@ function QuestList() {
           </li>
         ))}
       </ul>
+      <Link to={'/games'}><button>Games List</button></Link>
     </div>
   );
 }

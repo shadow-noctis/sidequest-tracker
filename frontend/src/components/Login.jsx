@@ -3,6 +3,7 @@ import { AuthContext } from './AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css';
+import { Link } from 'react-router-dom'
 
 export default function Login() {
     const [username, setUsername] = useState("");
@@ -56,6 +57,9 @@ export default function Login() {
                 <button type='submit'>Login</button>
                 <p>{message}</p>
             </form>
+            <div>
+            <Link to={'/register'}><button>Register</button></Link>
+            </div>
         </>
     );
 }

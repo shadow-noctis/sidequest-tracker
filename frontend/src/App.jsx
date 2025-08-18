@@ -10,6 +10,7 @@ import QuestList from './components/Quests'
 import Register from './components/Register'
 import Login from './components/Login'
 import LogoutButton from './components/Logout';
+import GamesList from './components/Games'
 
 export default function App() {
 
@@ -18,7 +19,7 @@ export default function App() {
   return (
     <>
     <ToastContainer 
-        position="top-right"
+        position="bottom-right"
         autoClose={3000}   // 3 seconds
         hideProgressBar={false}
         newestOnTop={false}
@@ -30,8 +31,8 @@ export default function App() {
           <ul className="header">
             <li><NavLink to='/'>Home</NavLink></li>
             <li><NavLink to="/quests">Quests</NavLink></li>
+            <li><NavLink to="/games">Games</NavLink></li>
             {user?.role === 'admin' && (<li><NavLink to="/add">Add Quest</NavLink></li>)}
-            <li><NavLink to='/register'>Register</NavLink></li>
             {!user ? (
             <>
               <li><NavLink to='/login'>Login</NavLink></li>
@@ -44,7 +45,8 @@ export default function App() {
           <div className="content">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="quests" element={<QuestList />} />
+              <Route path="games" element={<GamesList />} />
+              <Route path="games/:gameId/quests" element={<QuestList />} />
               <Route path="add" element={<AddQuest />} />
               <Route path='register' element={<Register />} />
               <Route path='login' element={<Login />} />

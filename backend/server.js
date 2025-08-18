@@ -111,6 +111,17 @@ createAdmin();
 
 // ROUTES
 
+// Get all games
+app.get('/api/games', (req, res) => {
+  try {
+    const games = db.prepare(`SELECT * FROM games`).all();
+    res.json(games);
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+});
+
+
 // Get all quests
 app.get('/api/quests', (req, res) => {
   let userId = null;
@@ -142,6 +153,43 @@ app.get('/api/quests', (req, res) => {
   }
 });
 
+
+// Get quests related to specific game
+app.get('/api/games/:gameId/quests', (req, res) => {
+  let userId = null;
+  const gameId = req.params.gameId;
+
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded =jwt.verify(token, jwtSecret);
+      userId = decoded.id
+    } catch (err) {
+
+    }
+  }
+    try {
+const quests = db.prepare(`
+      SELECT q.*,
+            CASE 
+              WHEN ? IS NULL THEN 0
+              ELSE IFNULL(uq.completed, 0)
+            END AS completed
+      FROM quests q
+      LEFT JOIN user_quests uq 
+            ON q.id = uq.quest_id AND uq.user_id = ?
+      WHERE q.game_id = ?
+  `).all(userId, userId, gameId)
+  .map(q => ({ ...q, completed: !!q.completed }));
+
+    res.json(quests);
+  } catch (err) {
+    console.error('Error fetching quests:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get all achievements
 app.get('/api/achievements', (req, res) => {
   try {
@@ -162,7 +210,7 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
       `);
       gameStmt.run(gameName)
 
-      const game = db.prepare(`SELECT id FROM games WHERE name = ?`)
+      const game = db.prepare(`SELECT id FROM games WHERE name = ?`).get(gameName)
 
       const platformStmt = db.prepare(`
         INSERT INTO platforms (name) VALUES (?)
