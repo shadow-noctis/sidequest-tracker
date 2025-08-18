@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 import {jwtDecode } from 'jwt-decode'
 
 export const AuthContext = createContext();
@@ -39,3 +39,5 @@ export function AuthProvider({ children }) {
         </AuthContext.Provider>
     );
 }
+
+export const useAuth = () => useContext(AuthContext);

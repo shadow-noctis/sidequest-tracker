@@ -11,10 +11,6 @@ export default function Login() {
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    const login_success = () => {
-        toast("Login Successful!");
-    }
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -41,7 +37,6 @@ export default function Login() {
     
     return (
         <>
-        <ToastContainer />
             <form onSubmit={handleSubmit}>
                 <h2>Login</h2>
                 <input

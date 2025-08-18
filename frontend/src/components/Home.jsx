@@ -1,15 +1,19 @@
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 function Home() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const hasShown = useRef(false)
 
     useEffect(() => {
-        if (location.state?.toastMessage) {
-            toast.success(location.state.toastMessage);
+        if (location.state?.toastMessage && !hasShown.current) {
+            toast(location.state.toastMessage);
+            hasShown.current = true;
+            navigate(location.pathname, {replace: true})
         }
-    }, [location.state]);
+    }, [location, navigate]);
 
     return (
         <div>

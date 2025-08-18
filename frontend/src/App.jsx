@@ -9,6 +9,7 @@ import AddQuest from './components/AddQuest'
 import QuestList from './components/Quests'
 import Register from './components/Register'
 import Login from './components/Login'
+import LogoutButton from './components/Logout';
 
 export default function App() {
 
@@ -31,7 +32,14 @@ export default function App() {
             <li><NavLink to="/quests">Quests</NavLink></li>
             {user?.role === 'admin' && (<li><NavLink to="/add">Add Quest</NavLink></li>)}
             <li><NavLink to='/register'>Register</NavLink></li>
-            <li><NavLink to='/login'>Login</NavLink></li>
+            {!user ? (
+            <>
+              <li><NavLink to='/login'>Login</NavLink></li>
+            </>
+            ) : (
+              <li><LogoutButton /></li>
+            )}
+
           </ul>
           <div className="content">
             <Routes>
