@@ -11,6 +11,7 @@ import Register from './components/Register'
 import Login from './components/Login'
 import LogoutButton from './components/Logout';
 import GamesList from './components/Games'
+import EditQuest from './components/EditQuest'
 
 export default function App() {
 
@@ -46,6 +47,7 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="games" element={<GamesList />} />
               <Route path="games/:gameId/quests" element={<QuestList />} />
+              <Route path="quests/:questId" element={<EditQuest />} />
               <Route path="add" element={<AddQuest />} />
               <Route path='register' element={<Register />} />
               <Route path='login' element={<Login />} />

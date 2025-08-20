@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Link } from 'react-router-dom'
+import React, { useEffect, useState, useContext, useRef } from 'react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { AuthContext } from "./AuthContext";
+import { toast } from "react-toastify";
 
 function QuestList() {
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const { gameId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const hasShown = useRef(false)
 
+  const { user } = useContext(AuthContext)
   const token = localStorage.getItem('token');
 
   // Mark quest as completed
@@ -35,6 +41,17 @@ function QuestList() {
       console.error('Error completing quest:', err);
     }
   }
+
+    // Show toast when returning from successful add/edit/delete (admin only)
+    useEffect(() => {
+        if (location.state?.toastMessage && !hasShown.current) {
+            toast(location.state.toastMessage);
+            hasShown.current = true;
+            navigate(location.pathname, {replace: true})
+        }
+    }, [location, navigate]);
+
+
 
   // Fetch quests on mount
   useEffect(() => {
@@ -67,6 +84,7 @@ function QuestList() {
               <li>Requirements: {quest.requirement}</li>
               <li>Missable: {quest.missable ? ' ✓' : ' ✗'}</li>
               <li>Completed: {quest.completed ? ' ✓' : ' ✗'}</li>
+              {user?.role === 'admin' && (<li><Link to={`/quests/${quest.id}`}>Edit</Link></li>)}
                 <li>
                   <button onClick={() => completeQuest(quest.id, quest.completed)}>
                     {quest.completed ? 'Mark as Not Completed' : 'Mark as Completed'}

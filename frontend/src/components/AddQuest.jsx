@@ -1,4 +1,5 @@
 import React, { useState, useEffect} from 'react'
+import { toast } from 'react-toastify'
 
 function AddQuest() {
     const [newTitle, setNewTitle] = useState("")
@@ -35,6 +36,7 @@ function AddQuest() {
             } 
             const data = await res.json();
             console.log('Quest added:', data);
+            toast("Quest added!")
 
             resetForm();
 

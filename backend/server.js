@@ -190,6 +190,19 @@ const quests = db.prepare(`
   }
 });
 
+// Get specific quest data
+app.get('/api/quests/:questId', (req, res) => {
+  const questId = req.params.questId;
+  
+  try {
+    const quest = db.prepare(`SELECT * FROM quests WHERE id = ?`).get(questId)
+    res.json(quest);
+  } catch (err) {
+    console.error('Error fetching quest', err);
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // Get all achievements
 app.get('/api/achievements', (req, res) => {
   try {
@@ -241,18 +254,24 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
 // Update quest
 app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params;
-  const { title, description, requirement, location, missable, hint} = req.body
+  let { title, description, requirement, location, missable, hint} = req.body
 
   try {
+
+    if (typeof missable === "boolean") {
+      missable = missable ? 1: 0;
+    }
+
     const stmt = db.prepare(`
       UPDATE quests
-      SET title = ?, descrpition = ?, requirement = ?, location = ?, missable = ?, hint = ?
+      SET title = ?, description = ?, requirement = ?, location = ?, missable = ?, hint = ?
       WHERE id = ?
       `);
       const info = stmt.run(title, description, requirement, location, missable, hint, id)
       if (info.changes === 0) return res. status(404).json({error: 'Quest not found'});
       res.json({ message: 'Quest updated succesfully' });
   } catch (err) {
+    console.error("Error updating quest", err)
     res.status(500).json({ error: err.message });
   }
 });
