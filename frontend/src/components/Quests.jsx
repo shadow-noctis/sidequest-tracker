@@ -3,8 +3,12 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { AuthContext } from "./AuthContext";
 import { toast } from "react-toastify";
+import DeleteModal from './DeleteModal'
 
 function QuestList() {
+  const [showModal, setShowModal] = useState(false);
+  const [selectedQuest, setSelectedQuest] = useState(null)
+
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const { gameId } = useParams();
@@ -16,6 +20,29 @@ function QuestList() {
   const token = localStorage.getItem('token');
 
   // Mark quest as completed
+  
+  const handleDeleteClick = (quest) => {
+    setSelectedQuest(quest.id);
+    setShowModal(true);
+  }
+
+  const handleDelete = () => {
+    fetch(`http://localhost:3001/api/quests/${selectedQuest}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-type': 'application/json',
+        'Authorization': `Bearer: ${token}`
+      }
+    })
+    .then(() => {
+      console.log("Quest deleted!")
+      toast("Quest deleted!")
+    });
+
+    setShowModal(false);
+  }
+  
+  
   async function completeQuest(questId, currentCompleted) {
     try {
       const res = await fetch(`http://localhost:3001/api/quests/${questId}/complete`, {
@@ -85,6 +112,7 @@ function QuestList() {
               <li>Missable: {quest.missable ? ' ✓' : ' ✗'}</li>
               <li>Completed: {quest.completed ? ' ✓' : ' ✗'}</li>
               {user?.role === 'admin' && (<li><Link to={`/quests/${quest.id}`}>Edit</Link></li>)}
+              {user?.role === 'admin' && (<li><button onClick={() => handleDeleteClick(quest)}>Delete</button></li>)}
                 <li>
                   <button onClick={() => completeQuest(quest.id, quest.completed)}>
                     {quest.completed ? 'Mark as Not Completed' : 'Mark as Completed'}
@@ -95,6 +123,14 @@ function QuestList() {
         ))}
       </ul>
       <Link to={'/games'}><button>Games List</button></Link>
+
+      {showModal && (
+        <DeleteModal
+          itemName={selectedQuest.title}
+          onConfirm={handleDelete}
+          onCancel={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 }
