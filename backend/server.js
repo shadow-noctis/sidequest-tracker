@@ -5,7 +5,8 @@ const cors = require('cors');
 const Database = require('better-sqlite3');
 const fs = require('fs');
 const bcrypt = require("bcrypt")
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const { release } = require('os');
 const jwtSecret = process.env.JWT_SECRET;
 
 const app = express();
@@ -247,7 +248,7 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
           res.status(201).json({ id: info.lastInsertRowid, message: 'Quest added succesfully' });
     } catch (err) {
       console.error('Error adding quest: ', err);
-      res.status(500).json({ error: err.message})
+      res.status(500).json({ error: err.message })
     }
   });
 
@@ -288,6 +289,63 @@ app.delete('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res
     res.status(500).json({ error: err.message });
   }
 });
+
+// Add game
+app.post('/api/games', authenticateToken, requireRole('admin'), (req, res) => {
+  const { name, publisher, release_date, platforms } = req.body
+  try {
+    //Add game to database
+    const gameStmt = db.prepare(`
+      INSERT INTO games (name, publisher, release_date)
+      VALUES (?, ?, ?)
+      `);
+      const games = gameStmt.run(name, publisher, release_date);
+      res.status(201).json({id: games.lastInsertRowid, message: 'Game added succesfully'});
+
+    // Add id connection to game_platform table
+    
+    for (let i = 0; i < platforms.length; i++) {
+
+    const gameId = games.lastInsertRowid;
+    const platform = db.prepare(`SELECT id FROM platforms WHERE name = ?`).get(platforms[i]);
+    const platformId = platform.id
+
+    const gpStmt = db.prepare(`
+      INSERT INTO game_platform (game_id, platform_id) VALUES (?, ?)`);
+      gpStmt.run(gameId, platformId);
+    }
+
+  } catch (err) {
+    console.error('Error adding game:', err);
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Get all platforms
+app.get('/api/platforms', (req, res) => {
+  try {
+    const platforms = db.prepare(`SELECT * FROM platforms`).all();
+    res.json(platforms);
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+});
+
+// Add platform
+app.post('/api/platforms', authenticateToken, requireRole('admin'), (req, res) => {
+  const { name, manufacturer } = req.body
+  try {
+    const platformStmt = db.prepare(`
+      INSERT INTO platforms (name, manufacturer)
+      VALUES (?, ?)
+      `);
+      const platforms =platformStmt.run(name, manufacturer);
+      res.status(201).json({id: platforms.lastInsertRowid, message: 'Platform added succesfully'});
+  } catch (err) {
+    console.error('Error adding platform:', err);
+    res.status(500).json({ error: err.message })
+  }
+})
 
 // Register
 app.post('/api/register', async (req, res) => {

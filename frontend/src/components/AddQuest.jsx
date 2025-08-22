@@ -5,7 +5,7 @@ function AddQuest() {
     const [newTitle, setNewTitle] = useState("")
     const [newDescription, setNewDescription] = useState("")
     const [gameName, setGameName] = useState("")
-    const [gamePlatform, setGamePlatform] = useState("")
+    const [platforms, setGamePlatform] = useState([])
     const [newLocation, setNewLocation] = useState("")
     const [newHint, setNewHint] = useState("")
     const [newRequirement, setNewRequirement] = useState("")
@@ -24,7 +24,7 @@ function AddQuest() {
                     'title': newTitle,
                     'description': newDescription,
                     'gameName': gameName,
-                    'platformName': gamePlatform,
+                    'platformName': platforms,
                     'location': newLocation,
                     'hint': newHint,
                     'requirement':newRequirement
@@ -78,8 +78,8 @@ function AddQuest() {
             />
             <input
                 type='text'
-                placeholder="Platform"
-                value={gamePlatform}
+                placeholder="Platforms"
+                value={platforms}
                 onChange={(q) => setGamePlatform(q.target.value)}
             />
             <input
