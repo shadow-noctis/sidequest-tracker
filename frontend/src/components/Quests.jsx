@@ -22,12 +22,12 @@ function QuestList() {
   // Mark quest as completed
   
   const handleDeleteClick = (quest) => {
-    setSelectedQuest(quest.id);
+    setSelectedQuest(quest);
     setShowModal(true);
   }
 
   const handleDelete = () => {
-    fetch(`http://localhost:3001/api/quests/${selectedQuest}`, {
+    fetch(`http://localhost:3001/api/quests/${selectedQuest.id}`, {
       method: 'DELETE',
       headers: {
         'Content-type': 'application/json',
@@ -94,7 +94,7 @@ function QuestList() {
         console.error('Error fetching quests:', err);
         setLoading(false);
       });
-  }, [gameId, token]);
+  }, [gameId, token, showModal]);
 
   if (loading) return <p>Loading quests...</p>;
 

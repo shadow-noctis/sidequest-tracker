@@ -1,4 +1,3 @@
-import './app.css'
 import React, { useContext } from 'react'
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom'
 import {ToastContainer} from 'react-toastify';
