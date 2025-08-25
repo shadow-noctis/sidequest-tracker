@@ -216,35 +216,16 @@ app.get('/api/achievements', (req, res) => {
 
 // Add a new quest
 app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
-  const { title, description, requirement, location, missable, gameName, platformName } = req.body;
+  const { title, description, requirement, location, missable, gameName, hint } = req.body;
+  console.log(title, description, requirement, location, missable, gameName, hint)
   try {
-    const gameStmt = db.prepare(`
-      INSERT INTO games (name) VALUES (?)
-      ON CONFLICT(name) DO NOTHING
-      `);
-      gameStmt.run(gameName)
-
       const game = db.prepare(`SELECT id FROM games WHERE name = ?`).get(gameName)
 
-      const platformStmt = db.prepare(`
-        INSERT INTO platforms (name) VALUES (?)
-        ON CONFLICT (name)  DO NOTHING
+      const questStmt = db.prepare(`
+          INSERT INTO quests (game_id, title, description, requirement, location, missable, hint)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
         `);
-        platformStmt.run(platformName)
-
-        const platform = db.prepare(`SELECT id FROM platforms WHERE name = ?`).get(platformName)
-
-        const gpStmt =  db.prepare(`
-          INSERT INTO game_platform (game_id, platform_id) VALUES (?, ?)
-          ON CONFLICT(game_id, platform_id) DO NOTHING
-          `);
-          gpStmt.run(game.id, platform.id);
-
-          const questStmt = db.prepare(`
-              INSERT INTO quests (game_id, title, description, requirement, location, missable)
-              VALUES (?, ?, ?, ?, ?, ?)
-            `);
-          const info = questStmt.run(game.id, title, description, requirement, location, missable);
+          const info = questStmt.run(game.id, title, description, requirement, location, missable, hint);
           res.status(201).json({ id: info.lastInsertRowid, message: 'Quest added succesfully' });
     } catch (err) {
       console.error('Error adding quest: ', err);
@@ -391,7 +372,7 @@ app.post('/api/login', (req, res) => {
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role},
       jwtSecret,
-      { expiresIn: '1h' }
+      { expiresIn: '30s' }
     );
 
     res.json({ token });
@@ -429,6 +410,12 @@ app.get('/api/user/quests', authenticateToken, (req, res) => {
     `);
     const quests = stmt.all(userId);
     res.json(quests);
+});
+
+
+//Ping to check if token expired
+app.get("/api/ping", authenticateToken, (req, res) => {
+  res.json({ valid: true, user: req.user });
 });
 
 function requireRole(role) {

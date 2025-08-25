@@ -110,7 +110,7 @@ function EditQuest() {
                     </label>
                     <label>
                         Missable:
-                        <input type="checkbox" name="missable" value={questForm.location || false} onChange={handleChange} />
+                        <input type="checkbox" name="missable" value={questForm.missable || false} onChange={handleChange} />
                     </label>
                     <label>
                         Hint:

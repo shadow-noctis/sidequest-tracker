@@ -41,7 +41,8 @@ function AddGamePlatform() {
             }
             const gameData = await gameRes.json();
             console.log('Game added:', gameData);
-            toast(`Game "${gameName}" added`)
+            toast(`Game "${gameName}" added`);
+            fetchGames();
             resetGame();
 
         } catch (err) {
@@ -70,7 +71,8 @@ function AddGamePlatform() {
             const platformData = await platformRes.json();
             console.log('Platform added:', platformData);
             toast(`Platform "${platformName}" added`);
-            resetPlatform()
+            fetchPlatforms();
+            resetPlatform();
 
         } catch (err) {
             console.error('Failed to add platform', err)
@@ -101,22 +103,29 @@ function AddGamePlatform() {
 
 
     // Get platforms:
-    useEffect(() => {
-        fetch('http://localhost:3001/api/platforms')
+    const fetchPlatforms = async () => {
+        const res = await fetch('http://localhost:3001/api/platforms')
         .then(res => res.json())
         .then(data => {
             setAllPlatforms(data)
-        })
-    }, [])
+        });
+    };
 
-    // Get games
-    useEffect(() => {
-        fetch('http://localhost:3001/api/games')
-        .then(res => res.json())
+    const fetchGames = async () => {
+        const gameres =  await fetch('http://localhost:3001/api/games')
+        .then(gameres => gameres.json())
         .then(data => {
             setGames(data)
-        })
+        });
+    }
+
+    useEffect(() => {
+        fetchPlatforms();
     }, [])
+
+    useEffect(() => {
+        fetchGames()
+    })
 
     return(
         <>
