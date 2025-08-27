@@ -47,7 +47,7 @@ db.exec(`
     location TEXT,
     requirement TEXT,
     hint TEXT,
-    FOREIGN KEY (game_id) REFERENCES games(id)
+    FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS achievements (
@@ -81,8 +81,8 @@ db.exec(`
     game_id INTEGER,
     platform_id INTEGER,
     PRIMARY KEY(game_id, platform_id),
-    FOREIGN KEY (game_id) REFERENCES games(id),
-    FOREIGN KEY (platform_id) REFERENCES platforms(id)
+    FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
+    FOREIGN KEY (platform_id) REFERENCES platforms(id) ON DELETE CASCADE
   )
 `);
 
@@ -117,6 +117,16 @@ app.get('/api/games', (req, res) => {
   try {
     const games = db.prepare(`SELECT * FROM games`).all();
     res.json(games);
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+});
+
+// Get all platforms
+app.get('/api/platforms', (req, res) => {
+  try {
+    const platforms = db.prepare(`SELECT * FROM platforms`).all();
+    res.json(platforms);
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -302,29 +312,47 @@ app.post('/api/games', authenticateToken, requireRole('admin'), (req, res) => {
   }
 })
 
-// Get all platforms
-app.get('/api/platforms', (req, res) => {
-  try {
-    const platforms = db.prepare(`SELECT * FROM platforms`).all();
-    res.json(platforms);
+// Delete game
+app.delete('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) => {
+  const { id } = req.params;
+  try{
+    const deleteStmt = db.prepare(`DELETE FROM games WHERE id = ?`);
+    const info = deleteStmt.run(id);
+    if (info.changes === 0) return res.status(404).json({ error: 'Game not found'});
+    res.json({ message: 'Game removed'});
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: err.message})
   }
-});
+})
 
 // Add platform
 app.post('/api/platforms', authenticateToken, requireRole('admin'), (req, res) => {
   const { name, manufacturer } = req.body
   try {
+    console.log("Received body:", req.body);
     const platformStmt = db.prepare(`
       INSERT INTO platforms (name, manufacturer)
       VALUES (?, ?)
       `);
       const platforms =platformStmt.run(name, manufacturer);
+       res.json({ id: platforms.lastInsertRowid, name, manufacturer })
       res.status(201).json({id: platforms.lastInsertRowid, message: 'Platform added succesfully'});
   } catch (err) {
     console.error('Error adding platform:', err);
     res.status(500).json({ error: err.message })
+  }
+})
+
+// Delete platform
+app.delete('/api/platforms/:id', authenticateToken, requireRole('admin'), (req, res) => {
+  const { id } = req.params;
+  try{
+    const deleteStmt = db.prepare(`DELETE FROM platforms WHERE id = ?`);
+    const info = deleteStmt.run(id);
+    if (info.changes === 0) return res.status(404).json({ error: 'Platform not found'});
+    res.json({ message: 'Platform removed'});
+  } catch (err) {
+    res.status(500).json({ error: err.message})
   }
 })
 
@@ -367,12 +395,12 @@ app.post('/api/login', (req, res) => {
       return res.status(401).json({ error: 'Invalid password' });
     }
 
-    // ✅ Only create token once and send once
+    // Create and send token
     console.log('JWT payload:', { id: user.id, username: user.username, role: user.role });
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role},
       jwtSecret,
-      { expiresIn: '30s' }
+      { expiresIn: '1h' }
     );
 
     res.json({ token });

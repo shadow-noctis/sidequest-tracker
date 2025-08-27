@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import { toast } from 'react-toastify'
+import React, { useState, useEffect, useContext } from 'react';
+import { toast } from 'react-toastify';
+import { AuthContext } from './AuthContext';
+import DeleteModal from './DeleteModal'
+import ConfirmModal from './ConfirmModal'
 
 function AddGamePlatform() {
 
     //User token
+    const { user } = useContext(AuthContext)
     const token = localStorage.getItem('token');
 
     const [allPlatforms, setAllPlatforms] = useState([]);
@@ -18,6 +22,15 @@ function AddGamePlatform() {
     //Platform values
     const [platformName, setPlatformName] = useState("");
     const [manufacturer, setManufacturer] = useState("");
+
+    //Selected Game / Platform
+    const [selectedDelete, setSelectedDelete] = useState(null);
+
+    // Modals
+    const [platformModal, setPlatformModal] = useState(false);
+    const [confirmModal, setConfirmModal] = useState(false);
+    // Quest count for confirmModal:
+    const [questCount, setQuestCount] = useState(0);
 
     // Add new Game
     const addGame = async () => {
@@ -77,7 +90,58 @@ function AddGamePlatform() {
         } catch (err) {
             console.error('Failed to add platform', err)
         }
+    };
+
+    const handleDeleteClick = (to_delete, type) => {
+        setSelectedDelete(to_delete)
+        type === 'game' ? setConfirmModal(true) : setPlatformModal(true)
+
     }
+    
+    
+    const deleteGame = () => {
+        fetch(`http://localhost:3001/api/games/${selectedDelete.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-type': 'application/json',
+                'Authorization': `Bearer: ${token}`
+            }
+        })
+        .then(() => {
+            console.log(`${selectedDelete.name} deleted.`)
+            toast(`${selectedDelete.name} deleted!`)
+            fetchGames();
+        })
+        .catch(err => {
+            console.error('Error deleting platform:', err);
+            toast("Failed to delete platform")
+        })
+        .finally(() => {
+            setConfirmModal(false);
+        })
+    };
+
+    const deletePlatform = () => {
+        fetch(`http://localhost:3001/api/platforms/${selectedDelete.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-type': 'application/json',
+                'Authorization': `Bearer: ${token}`
+            }
+        })
+        .then(() => {
+            console.log(`${selectedDelete.name} deleted.`)
+            toast(`${selectedDelete.name} deleted!`)
+            fetchPlatforms();
+        })
+        .catch(err => {
+            console.error('Error deleting platform:', err);
+            toast("Failed to delete platform")
+        })
+        .finally(() => {
+            setPlatformModal(false);
+        })
+    };
 
     const handleChecked = (e) => {
         const { value, checked } = e.target;
@@ -121,11 +185,8 @@ function AddGamePlatform() {
 
     useEffect(() => {
         fetchPlatforms();
+        fetchGames();
     }, [])
-
-    useEffect(() => {
-        fetchGames()
-    })
 
     return(
         <>
@@ -133,7 +194,10 @@ function AddGamePlatform() {
                 <h4>Existing games</h4>
                 <ul>
                     {games.map(game => (
-                        <li key={game.name}>{game.name}</li>
+                        <ul>
+                            <li key={game.name}>{game.name}</li>
+                            {user?.role === 'admin' && (<li><button onClick={() => handleDeleteClick(game, 'game')}>Delete</button></li>)}
+                        </ul>
                     ))}
                 </ul>
                 <h3>Add New Game</h3>
@@ -171,7 +235,11 @@ function AddGamePlatform() {
                 <h4>Existing Platforms</h4>
                 <ul>
                     {allPlatforms.map(platform => (
-                        <li key={platform.id}>{platform.name}</li>
+                        <ul>
+                            <li key={platform.id}>{platform.name}</li>
+                            {user?.role === 'admin' && (<li><button onClick={() => handleDeleteClick(platform, 'platform')}>Delete</button></li>)}
+                        </ul>
+                        
                     ))}
                 </ul>
                 <input 
@@ -187,11 +255,28 @@ function AddGamePlatform() {
                     onChange={(p) => setManufacturer(p.target.value)}      
                 />
                 <button onClick={addPlatform}>Add Platform</button>
+
+                {platformModal && (
+                    <DeleteModal
+                    itemName={selectedDelete.name}
+                    onConfirm={deletePlatform}
+                    onCancel={() => setPlatformModal(false)}
+                    />
+                )},
+
+                {confirmModal && (
+                    <ConfirmModal
+                    itemName={selectedDelete.name}
+                    onConfirm={deleteGame}
+                    onCancel={() => setConfirmModal(false)}
+                    questCount={questCount}
+                    />
+                )}
+
             </div>
         </>
-    )
 
-    
+    )
 }
 
 export default AddGamePlatform

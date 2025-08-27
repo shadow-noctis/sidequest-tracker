@@ -50,7 +50,13 @@ export function AuthProvider({ children }) {
       }
     };
 
-    checkToken();
+    checkToken()
+
+    const interval = setInterval(() => {
+      checkToken()
+    }, 30*1000);
+    return () => clearInterval(interval);
+
   }, [token]);
 
   return (

@@ -33,7 +33,7 @@ export default function App() {
             <li><NavLink to='/'>Home</NavLink></li>
             <li><NavLink to="/games">Quests</NavLink></li>
             {user?.role === 'admin' && (<li><NavLink to="/add">Add Quest</NavLink></li>)}
-            {user?.role === 'admin' && (<li><NavLink to="/add-game-platform">Add Game / Platform</NavLink></li>)}
+            {user?.role === 'admin' && (<li><NavLink to="/game-platform">Games & Platforms</NavLink></li>)}
             {!user ? (
             <>
               <li><NavLink to='/login'>Login</NavLink></li>
@@ -52,7 +52,7 @@ export default function App() {
               <Route path="add" element={<AddQuest />} />
               <Route path='register' element={<Register />} />
               <Route path='login' element={<Login />} />
-              <Route path='add-game-platform' element={<AddGamePlatform />} />
+              <Route path='game-platform' element={<AddGamePlatform />} />
             </Routes>
           </div>
         </div>
