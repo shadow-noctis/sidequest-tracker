@@ -19,13 +19,13 @@ function QuestList() {
   const { user } = useContext(AuthContext)
   const token = localStorage.getItem('token');
 
-  // Mark quest as completed
-  
+  // Handle when delete clicked (confirm with Modal)
   const handleDeleteClick = (quest) => {
     setSelectedQuest(quest);
     setShowModal(true);
   }
 
+  // Handle delete after confirmed
   const handleDelete = () => {
     fetch(`http://localhost:3001/api/quests/${selectedQuest.id}`, {
       method: 'DELETE',
@@ -43,6 +43,7 @@ function QuestList() {
   }
   
   
+  // Mark as completed
   async function completeQuest(questId, currentCompleted) {
     try {
       const res = await fetch(`http://localhost:3001/api/quests/${questId}/complete`, {

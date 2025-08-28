@@ -135,6 +135,7 @@ app.get('/api/platforms', (req, res) => {
 
 // Get all quests
 app.get('/api/quests', (req, res) => {
+  console.log("api/quests")
   let userId = null;
 
   const authHeader = req.headers['authorization'];
@@ -146,7 +147,7 @@ app.get('/api/quests', (req, res) => {
     } catch (err) {
 
     }
-  }
+  }   
 
   try {
     const quests = db.prepare(`
@@ -167,6 +168,8 @@ app.get('/api/quests', (req, res) => {
 
 // Get quests related to specific game
 app.get('/api/games/:gameId/quests', (req, res) => {
+  console.log("api/games/GameId/quests")
+
   let userId = null;
   const gameId = req.params.gameId;
 
@@ -181,20 +184,21 @@ app.get('/api/games/:gameId/quests', (req, res) => {
     }
   }
     try {
-const quests = db.prepare(`
-      SELECT q.*,
-            CASE 
-              WHEN ? IS NULL THEN 0
-              ELSE IFNULL(uq.completed, 0)
-            END AS completed
-      FROM quests q
-      LEFT JOIN user_quests uq 
-            ON q.id = uq.quest_id AND uq.user_id = ?
-      WHERE q.game_id = ?
-  `).all(userId, userId, gameId)
-  .map(q => ({ ...q, completed: !!q.completed }));
+      // Get quests
+      const quests = db.prepare(`
+            SELECT q.*,
+                  CASE 
+                    WHEN ? IS NULL THEN 0
+                    ELSE IFNULL(uq.completed, 0)
+                  END AS completed
+            FROM quests q
+            LEFT JOIN user_quests uq 
+                  ON q.id = uq.quest_id AND uq.user_id = ?
+            WHERE q.game_id = ?
+        `).all(userId, userId, gameId)
+        .map(q => ({ ...q, completed: !!q.completed }));
 
-    res.json(quests);
+          res.json(quests);
   } catch (err) {
     console.error('Error fetching quests:', err);
     res.status(500).json({ error: err.message });
@@ -206,8 +210,15 @@ app.get('/api/quests/:questId', (req, res) => {
   const questId = req.params.questId;
   
   try {
+    const gameIdStmt = db.prepare(`SELECT game_id FROM quests WHERE id = ?`);
+    gameId = gameIdStmt.get(questId);
+    console.log(gameId.game_id)
+    const gameStmt = db.prepare(`SELECT name FROM games WHERE id = ?`);
+    const game = gameStmt.get(gameId.game_id)
+    console.log(`Game name: ${game.name}`)
+
     const quest = db.prepare(`SELECT * FROM quests WHERE id = ?`).get(questId)
-    res.json(quest);
+    res.json({quest: quest, gameName: game.name});
   } catch (err) {
     console.error('Error fetching quest', err);
     res.status(500).json({ error: err.message })
