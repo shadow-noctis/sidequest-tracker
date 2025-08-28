@@ -2,15 +2,18 @@ import React, { useState, useEffect} from 'react'
 import { toast } from 'react-toastify'
 
 function AddQuest() {
-    const [questForm, setQuestForm] = useState({
+
+    const initialFormState = {
         title: "",
         description: "",
         location: "",
         requirement: "",
         missable: 0,
         hint: "",
-        gameName: ""
-    })
+        gameName: "" 
+    };
+
+    const [questForm, setQuestForm] = useState(initialFormState)
 
     const [allGames, setAllGames] = useState([])
 
@@ -60,13 +63,14 @@ function AddQuest() {
     };
 
     const resetForm = () => {
-        document.getElementById('add-quest-form').reset()
+        console.log("Resetting form...")
+        setQuestForm(initialFormState)
     }
 
     return(
         <div>
             <h1>Add New Quest</h1>
-            <form onSubmit={addNewQuest} id='add-quest-form'>
+            <form onSubmit={addNewQuest}>
                 <label>
                     Title:
                     <input name="title" value={questForm.title} onChange={handleChange} />
@@ -96,7 +100,7 @@ function AddQuest() {
                     {allGames.map(g => (
                         <ul>
                             <li key={g.id}>
-                                <input name='gameName' type='radio' value={g.name} onChange={handleChange} />
+                                <input name='gameName' type='radio' value={g.name} onChange={handleChange} checked={questForm.gameName == g.name}/>
                                 <label>{g.name}</label>
                             </li>
                         </ul>

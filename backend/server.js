@@ -315,7 +315,17 @@ app.post('/api/games', authenticateToken, requireRole('admin'), (req, res) => {
 // Delete game
 app.delete('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params;
+  const { force } = req.query;
   try{
+
+    const questCountStmt = db.prepare(`SELECT COUNT(*) as questCount FROM quests WHERE game_id = ?`);
+    const result = questCountStmt.get(id);
+    const questCount = result.questCount;
+    console.log(questCount)
+    if (questCount > 0 && !force) {
+      return res.status(409).json({ requireConfirmation: true, questCount: questCount})
+    }
+
     const deleteStmt = db.prepare(`DELETE FROM games WHERE id = ?`);
     const info = deleteStmt.run(id);
     if (info.changes === 0) return res.status(404).json({ error: 'Game not found'});
@@ -329,13 +339,11 @@ app.delete('/api/games/:id', authenticateToken, requireRole('admin'), (req, res)
 app.post('/api/platforms', authenticateToken, requireRole('admin'), (req, res) => {
   const { name, manufacturer } = req.body
   try {
-    console.log("Received body:", req.body);
     const platformStmt = db.prepare(`
       INSERT INTO platforms (name, manufacturer)
       VALUES (?, ?)
       `);
-      const platforms =platformStmt.run(name, manufacturer);
-       res.json({ id: platforms.lastInsertRowid, name, manufacturer })
+      const platforms = platformStmt.run(name, manufacturer);
       res.status(201).json({id: platforms.lastInsertRowid, message: 'Platform added succesfully'});
   } catch (err) {
     console.error('Error adding platform:', err);

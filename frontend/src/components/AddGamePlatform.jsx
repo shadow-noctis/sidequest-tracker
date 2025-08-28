@@ -94,32 +94,53 @@ function AddGamePlatform() {
 
     const handleDeleteClick = (to_delete, type) => {
         setSelectedDelete(to_delete)
-        type === 'game' ? setConfirmModal(true) : setPlatformModal(true)
+        type === 'game' ? deleteGame(to_delete) : setPlatformModal(true)
 
     }
     
-    
-    const deleteGame = () => {
-        fetch(`http://localhost:3001/api/games/${selectedDelete.id}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-type': 'application/json',
-                'Authorization': `Bearer: ${token}`
+    const deleteGame = async (game) => {
+        try{
+            const res = await fetch(`http://localhost:3001/api/games/${game.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-type': 'application/json',
+                    'Authorization': `Bearer: ${token}`
+                }
+            })
+            const data = await res.json()
+            if (res.status == 409) {
+                console.log(`Requires confirmation: ${data.requireConfirmation}, questCount: ${data.questCount}`)
+                setQuestCount(data.questCount)
+                setConfirmModal(true)
+                return;
             }
-        })
-        .then(() => {
-            console.log(`${selectedDelete.name} deleted.`)
-            toast(`${selectedDelete.name} deleted!`)
+            console.log(`${game.name} deleted.`);
+            toast(`${game.name} deleted!`);
             fetchGames();
-        })
-        .catch(err => {
-            console.error('Error deleting platform:', err);
-            toast("Failed to delete platform")
-        })
-        .finally(() => {
             setConfirmModal(false);
-        })
+            return;
+        } catch (err) {
+            console.error('Failed to delete game:', err)
+        }
     };
+
+    const forceDeleteGame = async () => {
+        try{
+            const res = await fetch(`http://localhost:3001/api/games/${selectedDelete.id}?force=true`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-type': 'application/json',
+                    'Authorization': `Bearer: ${token}`
+                    }
+                });
+                console.log(`${selectedDelete.name} and ${questCount} related quests deleted`)
+                toast(`Game deleted succesfully!`)
+                fetchGames();
+                setConfirmModal(false);
+            } catch (err) {
+                console.log(`Error deleting game:`, err)
+            }
+        }
 
     const deletePlatform = () => {
         fetch(`http://localhost:3001/api/platforms/${selectedDelete.id}`, {
@@ -267,7 +288,7 @@ function AddGamePlatform() {
                 {confirmModal && (
                     <ConfirmModal
                     itemName={selectedDelete.name}
-                    onConfirm={deleteGame}
+                    onConfirm={forceDeleteGame}
                     onCancel={() => setConfirmModal(false)}
                     questCount={questCount}
                     />
