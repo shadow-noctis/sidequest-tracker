@@ -216,8 +216,9 @@ function AddGamePlatform() {
                 <ul>
                     {games.map(game => (
                         <ul>
-                            <li key={game.name}>{game.name}</li>
-                            {user?.role === 'admin' && (<li><button onClick={() => handleDeleteClick(game, 'game')}>Delete</button></li>)}
+                            <li key={game.name}>{game.name}
+                            {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(game, 'game')}>Delete</button>)}
+                            </li>
                         </ul>
                     ))}
                 </ul>
@@ -257,8 +258,9 @@ function AddGamePlatform() {
                 <ul>
                     {allPlatforms.map(platform => (
                         <ul>
-                            <li key={platform.id}>{platform.name}</li>
-                            {user?.role === 'admin' && (<li><button onClick={() => handleDeleteClick(platform, 'platform')}>Delete</button></li>)}
+                            <li key={platform.id}>{platform.name}
+                                {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(platform, 'platform')}>Delete</button>)}
+                            </li>
                         </ul>
                         
                     ))}

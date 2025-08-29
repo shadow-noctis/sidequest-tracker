@@ -83,7 +83,15 @@ db.exec(`
     PRIMARY KEY(game_id, platform_id),
     FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
     FOREIGN KEY (platform_id) REFERENCES platforms(id) ON DELETE CASCADE
-  )
+  );
+
+  CREATE TABLE IF NOT EXISTS quest_platform (
+    quest_id INTEGER,
+    platform_id INTEGER,
+    PRIMARY KEY (quest_id, platform_id),
+    FOREIGN KEY (quest_id) REFERENCES quests(id)
+    FOREIGN KEY (platform_id) REFERENCES platforms(id)
+  );
 `);
 
 //Create admin
