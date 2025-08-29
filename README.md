@@ -4,22 +4,24 @@
 *(Learning project:)* A spoiler-free sidequest tracker allowing users to view information about sidequests for a game and mark the quest finished for tracking their progress.
 
 # Features
-- List quests
+- List quests by game
 - login
 - Mark quests done (Only logged in users)
+- Admin feature: add, delete, edit
 
 ## Planned features
-- List quests related to a game
 - Helpful tip (viewed only by request)
 - Addition of achievements
-- Logout
+- Add toggle between platforms
+- Option to edit games and platforms (admin only)
+- Request new game (form)
 
 ## Tech Stack
 - **Frontend**: React + Vite
 - **Backend**: Node.js
 
 ## Status
-🚧 Not yet functional - in early development
+🚧 Simple version functional with minor bugs
 
 ## Setup
 1. Clone this repo
