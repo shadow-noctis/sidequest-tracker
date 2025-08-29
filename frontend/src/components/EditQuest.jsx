@@ -4,11 +4,10 @@ import { Link } from 'react-router-dom'
 
 function EditQuest() {
     const token = localStorage.getItem('token');
-    const [test, setTest] = useState("")
 
-    const [platforms, setPlatforms] = useState(null)
-
-    const [quest, setQuest] = useState(null);
+    const [games, setGames] = useState(null);
+    const [game, setGame] = useState(null)
+    const [editQuest, setEditQuest] = useState(null);
     const { questId } = useParams();
     const navigate = useNavigate();
     const [questForm, setQuestForm] = useState({
@@ -17,15 +16,17 @@ function EditQuest() {
         location: "",
         requirement: "",
         missable: 0,
-        hint: ""
-    })
+        hint: "",
+        gameName: "",
+        gameId: 0
+    });
 
     useEffect(() => {
         fetch(`http://localhost:3001/api/quests/${questId}`)
             .then((res) => res.json())
             .then((data) => {
-                console.log("Quest data:", data)
-                setQuest(data);
+                setEditQuest(data.quest);
+                setGame(data.game)
                 setQuestForm({
                     title: data.quest.title,
                     description: data.quest.description,
@@ -33,22 +34,23 @@ function EditQuest() {
                     requirement: data.quest.requirement,
                     missable: data.quest.missable === 1,
                     hint: data.quest.hint,
+                    gameId: data.game.gameId,
                     id: data.quest.id
                 });
             });
     }, [questId]);
 
-    useEffect(() => {
-        console.log("quest state updated:", quest);
-        }, [quest]);
-
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setQuestForm((prev) =>({
             ...prev,
-            [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+            [name]: type === "checkbox" ? (checked ? 1 : 0) : (name === "gameId" ? Number(value) : value),
         }));
     };
+
+    useEffect(() => {
+        console.log(game)
+    }, [game])
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -62,47 +64,51 @@ function EditQuest() {
                 body: JSON.stringify(questForm),
             });
             if (!res.ok) throw new Error("Failed to update quest")
-                navigate(`/games/${quest.game_id}/quests`, { state: {toastMessage: 'Quest updated!'}});
+                navigate(`/games/${editQuest.game_id}/quests`, { state: {toastMessage: 'Quest updated!'}});
         } catch (err) {
             console.error("Error updating quest:", err);
         }
     };
 
-    const fetchPlatforms = async () => {
-        const res = await fetch('http://localhost:3001/api/platforms')
-        .then(res => res.json())
-        .then(data => {
-            setPlatforms(data)
-        });
-    };
     //Fetch info on mount
     useEffect(() => {
-        fetchPlatforms();
+        fetchGames();
         fetch(`http://localhost:3001/api/quests/${questId}`)
         .then(res => res.json())
         .then(data => {
-            setQuest(data);
+            setEditQuest(data.quest);
         })
         .catch(err => {
             console.error('Error fetching quest:', err);
         });
     }, []);
 
-    if (!quest) return <p>Loading quest...</p>;
+    //Fetch all games
+    const fetchGames = async () => {
+        const gameres =  await fetch('http://localhost:3001/api/games')
+        const gameData = await gameres.json();
+        setGames(gameData);
+    }
+
+    useEffect(() => {
+        console.log("Set game updated: ", game)
+    }, [game])
+
+    if (!editQuest || !games) return <p>Loading quest...</p>;
 
     return(
         <>
             <div>
                 <h2>Edit quest:</h2>
-                <h3>{quest.title}</h3>
+                <h3>{editQuest.title}</h3>
                 <ul>
-                    <li>{test}</li>
-                    <li>Name: {quest.quest.title}</li>
-                    <li>Description: {quest.quest.description}</li>
-                    <li>Location: {quest.quest.location}</li>
-                    <li>Requirements: {quest.quest.requirement}</li>
-                    <li>Missable: {quest.quest.missable === 1 ? "✓" : ""}</li>
-                    <li>Hint: {quest.quest.hint}</li>
+                    <li>Name: {editQuest.title}</li>
+                    <li>Description: {editQuest.description}</li>
+                    <li>Location: {editQuest.location}</li>
+                    <li>Requirements: {editQuest.requirement}</li>
+                    <li>Missable: {editQuest.missable === 1 ? "✓" : ""}</li>
+                    <li>Hint: {editQuest.hint}</li>
+                    <li>Game: {game.gameName}</li>
                 </ul>
             </div>
             <div>
@@ -132,13 +138,21 @@ function EditQuest() {
                         <textarea name="hint" value={questForm.hint} onChange={handleChange} />
                     </label>
                     <label>
-                        <input type="checkbox" value={questForm.platforms} onChange={handleChange}></input>
+                        Games:
+                        <ul>
+                        {games.map(g => (
+                                <li key={g.id}>
+                                    <input name='gameId' type='radio' value={g.id} checked={questForm.gameId === g.id} onChange={handleChange} />
+                                    <label>{g.name}</label>
+                                </li>
+                                ))}
+                        </ul>
                     </label>
-                    <p>Title: {questForm.title}<br />Description: {questForm.descrption}<br />Location {questForm.location}<br />
+                    <p>Title: {questForm.title}<br />Description: {questForm.description}<br />Location {questForm.location}<br />
                     Requirements {questForm.requirement}<br />Missable {questForm.missable}<br />
-                    Hint {questForm.hint}<br />Platforms {questForm.platforms}<br /></p>
+                    Hint {questForm.hint}<br />Game: {questForm.gameId}</p>
                     <button type='submit'>Save Changes</button>
-                    <button><Link to={`/games/${quest.game_id}/quests`}>Return</Link></button>
+                    <button><Link to={`/games/${editQuest.game_id}/quests`}>Return</Link></button>
 
                 </form>
             </div>

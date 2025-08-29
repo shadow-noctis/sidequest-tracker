@@ -135,7 +135,6 @@ app.get('/api/platforms', (req, res) => {
 
 // Get all quests
 app.get('/api/quests', (req, res) => {
-  console.log("api/quests")
   let userId = null;
 
   const authHeader = req.headers['authorization'];
@@ -168,8 +167,6 @@ app.get('/api/quests', (req, res) => {
 
 // Get quests related to specific game
 app.get('/api/games/:gameId/quests', (req, res) => {
-  console.log("api/games/GameId/quests")
-
   let userId = null;
   const gameId = req.params.gameId;
 
@@ -212,13 +209,11 @@ app.get('/api/quests/:questId', (req, res) => {
   try {
     const gameIdStmt = db.prepare(`SELECT game_id FROM quests WHERE id = ?`);
     gameId = gameIdStmt.get(questId);
-    console.log(gameId.game_id)
     const gameStmt = db.prepare(`SELECT name FROM games WHERE id = ?`);
     const game = gameStmt.get(gameId.game_id)
-    console.log(`Game name: ${game.name}`)
 
     const quest = db.prepare(`SELECT * FROM quests WHERE id = ?`).get(questId)
-    res.json({quest: quest, gameName: game.name});
+    res.json({quest: quest, game: {gameName: game.name, gameId: gameId.game_id}});
   } catch (err) {
     console.error('Error fetching quest', err);
     res.status(500).json({ error: err.message })
@@ -257,20 +252,20 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
 // Update quest
 app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params;
-  let { title, description, requirement, location, missable, hint} = req.body
+  let { title, description, requirement, location, missable, hint, gameId} = req.body
 
   try {
 
     if (typeof missable === "boolean") {
       missable = missable ? 1: 0;
     }
-
+    
     const stmt = db.prepare(`
       UPDATE quests
-      SET title = ?, description = ?, requirement = ?, location = ?, missable = ?, hint = ?
+      SET title = ?, description = ?, requirement = ?, location = ?, missable = ?, hint = ?, game_id = ?
       WHERE id = ?
       `);
-      const info = stmt.run(title, description, requirement, location, missable, hint, id)
+      const info = stmt.run(title, description, requirement, location, missable, hint, gameId, id)
       if (info.changes === 0) return res. status(404).json({error: 'Quest not found'});
       res.json({ message: 'Quest updated succesfully' });
   } catch (err) {
