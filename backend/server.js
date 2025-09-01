@@ -240,17 +240,28 @@ app.get('/api/achievements', (req, res) => {
 
 // Add a new quest
 app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
-  const { title, description, requirement, location, missable, gameName, hint } = req.body;
-  console.log(title, description, requirement, location, missable, gameName, hint)
+  const { title, description, requirement, location, missable, gameId, hint, platforms } = req.body;
+
+  if (!platforms || platforms.length === 0) {
+    return res.status(400).json({ error: "At least one platform must be selected." });
+  }
   try {
-      const game = db.prepare(`SELECT id FROM games WHERE name = ?`).get(gameName)
 
       const questStmt = db.prepare(`
           INSERT INTO quests (game_id, title, description, requirement, location, missable, hint)
           VALUES (?, ?, ?, ?, ?, ?, ?)
         `);
-          const info = questStmt.run(game.id, title, description, requirement, location, missable, hint);
-          res.status(201).json({ id: info.lastInsertRowid, message: 'Quest added succesfully' });
+          const quest = questStmt.run(gameId, title, description, requirement, location, missable, hint);
+
+
+      const qpStmt = db.prepare(`
+        INSERT INTO quest_platform (quest_id, platform_id)
+        VALUES (?, ?)
+        `);
+      platforms.forEach(pid => qpStmt.run(quest.lastInsertRowid, pid))
+
+
+          res.status(201).json({ id: quest.lastInsertRowid, message: 'Quest added succesfully' });
     } catch (err) {
       console.error('Error adding quest: ', err);
       res.status(500).json({ error: err.message })
@@ -422,7 +433,7 @@ app.post('/api/login', (req, res) => {
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role},
       jwtSecret,
-      { expiresIn: '1h' }
+      { expiresIn: '6h' }
     );
 
     res.json({ token });

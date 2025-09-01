@@ -10,17 +10,20 @@ function AddQuest() {
         requirement: "",
         missable: 0,
         hint: "",
-        gameName: "" 
+        gameId: null,
+        platforms: []
     };
 
     const [questForm, setQuestForm] = useState(initialFormState)
 
     const [allGames, setAllGames] = useState([])
+    const [allPlatforms, setAllPlatforms] = useState([])
 
     const token = localStorage.getItem('token');
 
     // Get games
     useEffect(() => {
+        fetchPlatforms();
         fetch('http://localhost:3001/api/games')
         .then(res => res.json())
         .then(data => {
@@ -29,7 +32,11 @@ function AddQuest() {
     }, [])
     
     const addNewQuest = async (e) => {
-        e.preventDefault()
+        e.preventDefault();
+        if (!questForm.platforms || questForm.platforms.length === 0) {
+            alert("Please select at least one platform.")
+            return;
+        }
         try{
             const res = await fetch('http://localhost:3001/api/quests', {
                     method: 'POST',
@@ -62,10 +69,47 @@ function AddQuest() {
     }));
     };
 
+    const handleCheckedOld = (e) => {
+        const { name, value, checked } = e.target;
+
+        setQuestForm((prev) => ({
+            ...prev,
+            [name]: checked ? [...prev[name], value] : prev[name].filter((p) => p !== value)
+        }))
+    };
+
+    const handleChecked = (e) => {
+  const { name, value, checked } = e.target;
+  const id = Number(value); // convert to number if IDs are integers
+
+  setQuestForm((prev) => {
+    if (checked) {
+      return {
+        ...prev,
+        [name]: [...prev[name], id]
+      };
+    } else {
+      return {
+        ...prev,
+        [name]: prev[name].filter((p) => p !== id)
+      };
+    }
+  });
+};
+
+
     const resetForm = () => {
         console.log("Resetting form...")
         setQuestForm(initialFormState)
-    }
+    };
+
+    const fetchPlatforms = async () => {
+        const res = await fetch('http://localhost:3001/api/platforms')
+        .then(res => res.json())
+        .then(data => {
+            setAllPlatforms(data)
+        });
+    };
 
     return(
         <div>
@@ -97,20 +141,33 @@ function AddQuest() {
                 </label>
                 <label>
                     Game:
+                    <ul>
                     {allGames.map(g => (
-                        <ul>
                             <li key={g.id}>
-                                <input name='gameName' type='radio' value={g.name} onChange={handleChange} checked={questForm.gameName == g.name}/>
+                                <input name='gameId' type='radio' value={g.id} onChange={handleChange} checked={questForm.gameId == g.id}/>
                                 <label>{g.name}</label>
-                            </li>
-                        </ul>
+                            </li>     
                     ))}
+                    </ul>
+                </label>
+                <label>
+                    Platforms:
+                    <ul>
+                    {allPlatforms.map(p => (
+                        <li key={p.id}>
+                            <input name="platforms" type="checkbox" value={p.id} onChange={handleChecked} checked={questForm.platforms.includes(p.id)} />
+                            <label>{p.name}</label>
+                        </li>
+                    ))}
+                    </ul>
                 </label>
                 <button type='submit'>Add Quest</button>
                 <button onClick={resetForm}>Clear</button>
             </form>
-            <p>Current choices: <br /> title: {questForm.title}, description {questForm.description}, location: {questForm.location},
-            requirement: {questForm.requirement}, missable:{questForm.missable}, hint: {questForm.hint}, game:{questForm.gameName}</p>
+            <p>Current choices: <br /> title: {questForm.title}<br /> description {questForm.description}<br /> location: {questForm.location}<br />
+                requirement: {questForm.requirement}<br /> missable:{questForm.missable}<br /> hint: {questForm.hint}<br /> game:{questForm.gameId}<br />
+                platforms: {questForm.platforms}
+            </p>
         </div>
     );
     }
