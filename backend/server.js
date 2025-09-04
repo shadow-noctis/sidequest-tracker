@@ -7,6 +7,7 @@ const fs = require('fs');
 const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken');
 const { release } = require('os');
+const { json } = require('stream/consumers');
 const jwtSecret = process.env.JWT_SECRET;
 
 const app = express();
@@ -57,8 +58,8 @@ db.exec(`
     unlocked BOOLEAN DEFAULT 0,
     game_id INTEGER,
     platform_id INTEGER,
-    FOREIGN KEY (game_id) REFERENCES games(id),
-    FOREIGN KEY (platform_id) REFERENCES platforms(id)
+    FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
+    FOREIGN KEY (platform_id) REFERENCES platforms(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS users (
@@ -73,8 +74,8 @@ db.exec(`
       quest_id INTEGER,
       completed INTEGER DEFAULT 0,
       PRIMARY KEY (user_id, quest_id),
-      FOREIGN KEY (user_id) REFERENCES users(id),
-      FOREIGN KEY (quest_id) REFERENCES quests(id)
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS game_platform (
@@ -89,8 +90,8 @@ db.exec(`
     quest_id INTEGER,
     platform_id INTEGER,
     PRIMARY KEY (quest_id, platform_id),
-    FOREIGN KEY (quest_id) REFERENCES quests(id)
-    FOREIGN KEY (platform_id) REFERENCES platforms(id)
+    FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE CASCADE,
+    FOREIGN KEY (platform_id) REFERENCES platforms(id) ON DELETE CASCADE
   );
 `);
 
@@ -195,15 +196,21 @@ app.get('/api/games/:gameId/quests', (req, res) => {
                   CASE 
                     WHEN ? IS NULL THEN 0
                     ELSE IFNULL(uq.completed, 0)
-                  END AS completed
+                  END AS completed,
+            json_group_array(
+            json_object('id', p.id, 'name', p.name)
+            ) as platforms
             FROM quests q
+            LEFT JOIN quest_platform qp ON q.id = qp.quest_id
+            LEFT JOIN platforms p ON qp.platform_id = p.id
             LEFT JOIN user_quests uq 
                   ON q.id = uq.quest_id AND uq.user_id = ?
             WHERE q.game_id = ?
         `).all(userId, userId, gameId)
-        .map(q => ({ ...q, completed: !!q.completed }));
+        .map(q => ({ ...q, platforms: JSON.parse(q.platforms), completed: !!q.completed }));
+        console.log(quests)
 
-          res.json(quests);
+        res.json(quests);
   } catch (err) {
     console.error('Error fetching quests:', err);
     res.status(500).json({ error: err.message });
