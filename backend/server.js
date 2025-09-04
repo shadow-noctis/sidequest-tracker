@@ -7,7 +7,6 @@ const fs = require('fs');
 const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken');
 const { release } = require('os');
-const { json } = require('stream/consumers');
 const jwtSecret = process.env.JWT_SECRET;
 
 const app = express();
@@ -141,6 +140,26 @@ app.get('/api/platforms', (req, res) => {
   }
 });
 
+// Get platforms related to specific quest
+app.get('/api/platforms/:gameId/quests', (req, res) => {
+  const { gameId } = req.body
+
+  try {
+    const platforms = db.prepare(`
+      SELECT p.id,
+      p.name
+      FROM platforms p
+      LEFT JOIN game_platform gp ON gp.game_id = ?
+      WHERE qp.game_id = ?
+      `).all(gameId)
+
+      res.json(platforms);
+  } catch (err) {
+    console.error('Error fetching platforms:', err);
+    res.status(500).json({ error: err.message })
+  }
+});
+
 
 // Get all quests
 app.get('/api/quests', (req, res) => {
@@ -198,19 +217,19 @@ app.get('/api/games/:gameId/quests', (req, res) => {
                     ELSE IFNULL(uq.completed, 0)
                   END AS completed,
             json_group_array(
-            json_object('id', p.id, 'name', p.name)
-            ) as platforms
+              json_object('id', p.id, 'name', p.name)
+              ) as platforms
             FROM quests q
             LEFT JOIN quest_platform qp ON q.id = qp.quest_id
             LEFT JOIN platforms p ON qp.platform_id = p.id
             LEFT JOIN user_quests uq 
                   ON q.id = uq.quest_id AND uq.user_id = ?
             WHERE q.game_id = ?
+            GROUP BY q.id
         `).all(userId, userId, gameId)
-        .map(q => ({ ...q, platforms: JSON.parse(q.platforms), completed: !!q.completed }));
-        console.log(quests)
+        const parsedQuests = quests.map(quest => ({ ...quest, platforms: JSON.parse(quest.platforms), completed: !!quest.completed}));
 
-        res.json(quests);
+        res.json(parsedQuests);
   } catch (err) {
     console.error('Error fetching quests:', err);
     res.status(500).json({ error: err.message });
@@ -222,13 +241,36 @@ app.get('/api/quests/:questId', (req, res) => {
   const questId = req.params.questId;
   
   try {
+    // Get game related info with platforms
     const gameIdStmt = db.prepare(`SELECT game_id FROM quests WHERE id = ?`);
-    gameId = gameIdStmt.get(questId);
-    const gameStmt = db.prepare(`SELECT name FROM games WHERE id = ?`);
-    const game = gameStmt.get(gameId.game_id)
+    const gameId = gameIdStmt.get(questId);
+    const game = db.prepare(`
+      SELECT g.name,
+      g.id,
+      json_group_array(
+        json_object('id', p.id, 'name', p.name)
+        ) as platforms
+      FROM games g
+      LEFT JOIN game_platform gp ON gp.game_id = g.id
+      LEFT JOIN platforms p ON gp.platform_id = p.id
+      WHERE g.id = ?
+      GROUP BY g.id
+      `).get(gameId.game_id);
 
-    const quest = db.prepare(`SELECT * FROM quests WHERE id = ?`).get(questId)
-    res.json({quest: quest, game: {gameName: game.name, gameId: gameId.game_id}});
+    // Get quest related info with platforms
+    const quest = db.prepare(`
+      SELECT q.*,
+      json_group_array(
+        json_object('id', p.id, 'name', p.name)
+        ) as platforms
+      FROM quests q
+      LEFT JOIN quest_platform qp ON q.id = qp.quest_id
+      LEFT JOIN platforms p ON qp.platform_id = p.id
+      WHERE q.id = ?
+      GROUP BY q.id
+      `).get(questId)
+
+    res.json({quest: {...quest, platforms : JSON.parse(quest.platforms)}, game: {...game, platforms : JSON.parse(game.platforms)}});
   } catch (err) {
     console.error('Error fetching quest', err);
     res.status(500).json({ error: err.message })
@@ -278,7 +320,7 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
 // Update quest
 app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params;
-  let { title, description, requirement, location, missable, hint, gameId} = req.body
+  let { title, description, requirement, location, missable, hint, gameId } = req.body
 
   try {
 
@@ -293,7 +335,7 @@ app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) =
       `);
       const info = stmt.run(title, description, requirement, location, missable, hint, gameId, id)
       if (info.changes === 0) return res. status(404).json({error: 'Quest not found'});
-      res.json({ message: 'Quest updated succesfully' });
+      res.json({ message: `Quest ${id} ${info.title} updated succesfully` });
   } catch (err) {
     console.error("Error updating quest", err)
     res.status(500).json({ error: err.message });
