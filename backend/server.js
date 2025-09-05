@@ -310,7 +310,7 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
       platforms.forEach(pid => qpStmt.run(quest.lastInsertRowid, pid))
 
 
-          res.status(201).json({ id: quest.lastInsertRowid, message: 'Quest added succesfully' });
+      res.status(201).json({ id: quest.lastInsertRowid, message: 'Quest added succesfully' });
     } catch (err) {
       console.error('Error adding quest: ', err);
       res.status(500).json({ error: err.message })
@@ -320,22 +320,32 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
 // Update quest
 app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params;
-  let { title, description, requirement, location, missable, hint, gameId } = req.body
+  let { title, description, requirement, location, missable, hint, gameId, platforms } = req.body
 
   try {
 
     if (typeof missable === "boolean") {
       missable = missable ? 1: 0;
     }
+
+    const platformDel = db.prepare(`
+      DELETE FROM quest_platform WHERE quest_id = ?
+      `).run(id)
+
+    const platformInsertStmt = db.prepare(`
+      INSERT INTO quest_platform (quest_id, platform_id)
+      VALUES (?, ?)
+      `);
+      platforms.forEach(pid => platformInsertStmt.run(id, pid));
     
-    const stmt = db.prepare(`
+    const updateStmt = db.prepare(`
       UPDATE quests
       SET title = ?, description = ?, requirement = ?, location = ?, missable = ?, hint = ?, game_id = ?
       WHERE id = ?
       `);
-      const info = stmt.run(title, description, requirement, location, missable, hint, gameId, id)
+      const info = updateStmt.run(title, description, requirement, location, missable, hint, gameId, id)
       if (info.changes === 0) return res. status(404).json({error: 'Quest not found'});
-      res.json({ message: `Quest ${id} ${info.title} updated succesfully` });
+      res.json({ message: `Quest ${id} ${info.title} updated successfully` });
   } catch (err) {
     console.error("Error updating quest", err)
     res.status(500).json({ error: err.message });
@@ -385,6 +395,56 @@ app.post('/api/games', authenticateToken, requireRole('admin'), (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+
+// Get specific game data
+app.get('/api/games/:gameId', (req, res) => {
+  const { gameId } = req.params;
+  
+  try{
+    const game = db.prepare(`
+      SELECT g.*,
+      json_group_array(
+        json_object('id', p.id, 'name', p.name)
+      ) as platforms
+      FROM games g
+      LEFT JOIN game_platform gp ON g.id = gp.game_id
+      LEFT JOIN platforms p ON gp.platform_id = p.id
+      WHERE g.id = ?
+      GROUP BY g.id
+      `).get(gameId)
+
+      res.json({...game, platforms : JSON.parse(game.platforms)});
+  } catch(err) {
+    console.error('Error fetching game', err)
+    res.status(500).json({ error: err.message})
+  }
+});
+
+// Update game
+app.put('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) => {
+  const { id } = req.params
+  const { name, publisher, year, platforms } = req.body;
+  try{
+    //Delete all connections of the game from game_platform table
+    const platformDelStmt = db.prepare(`DELETE FROM game_platform WHERE game_id = ?`).run(id)
+
+    const platformInsertStmt = db.prepare(`
+      INSERT INTO game_platform (game_id, platform_id)
+      VALUES (?, ?)
+      `);
+      platforms.forEach(pid => platformInsertStmt.run(id, pid));
+
+    const updateStmt = db.prepare(`
+      UPDATE games
+      SET name = ?, publisher = ?, release_date = ?
+      WHERE id = ?`).run(name, publisher, year, id)
+
+    res.json({ message: `Game ${id} updated successfully`})
+  } catch (err) {
+    console.error("Error updating game", err)
+    res.status(500).json({ error: err.message })
+  }
+});
 
 // Delete game
 app.delete('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) => {

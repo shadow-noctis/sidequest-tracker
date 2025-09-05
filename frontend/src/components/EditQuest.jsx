@@ -6,7 +6,8 @@ function EditQuest() {
     const token = localStorage.getItem('token');
 
     const [games, setGames] = useState(null);
-    const [game, setGame] = useState(null)
+    const [game, setGame] = useState(null);
+
     const [editQuest, setEditQuest] = useState(null);
     const { questId } = useParams();
     const navigate = useNavigate();
@@ -18,7 +19,8 @@ function EditQuest() {
         missable: 0,
         hint: "",
         gameName: "",
-        gameId: 0
+        gameId: null,
+        platforms: []
     });
 
     useEffect(() => {
@@ -26,6 +28,7 @@ function EditQuest() {
             .then((res) => res.json())
             .then((data) => {
                 setEditQuest(data.quest);
+                console.log(data)
                 setGame(data.game)
                 setQuestForm({
                     title: data.quest.title,
@@ -34,8 +37,9 @@ function EditQuest() {
                     requirement: data.quest.requirement,
                     missable: data.quest.missable === 1,
                     hint: data.quest.hint,
-                    gameId: data.game.gameId,
-                    id: data.quest.id
+                    gameId: data.game.id,
+                    id: data.quest.id,
+                    platforms: data.quest.platforms.map(p => p.id)
                 });
             });
     }, [questId]);
@@ -48,9 +52,24 @@ function EditQuest() {
         }));
     };
 
-    useEffect(() => {
-        console.log(game)
-    }, [game])
+    const handleChecked = (e) => {
+        const { name, value, checked } = e.target;
+        const id = Number(value);
+
+        setQuestForm((prev) => {
+            if (checked) {
+            return {
+                ...prev,
+                [name]: [...prev[name], id]
+            };
+            } else {
+            return {
+                ...prev,
+                [name]: prev[name].filter((p) => p !== id)
+            };
+            }
+        });
+        };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -89,10 +108,6 @@ function EditQuest() {
         const gameData = await gameres.json();
         setGames(gameData);
     }
-
-    useEffect(() => {
-        console.log("Set game updated: ", game)
-    }, [game])
 
     if (!editQuest || !games) return <p>Loading quest...</p>;
 
@@ -148,11 +163,22 @@ function EditQuest() {
                                 ))}
                         </ul>
                     </label>
+                    <label>
+                        Platforms:
+                        <ul>
+                            {game.platforms.map(p => (
+                                <li key={p.id}>
+                                    <input name='platforms' type='checkbox' value={p.id} onChange={handleChecked} checked={questForm.platforms.includes(p.id)} />
+                                    <label>{p.name}</label>
+                                </li>
+                            ))}
+                        </ul>
+                    </label>
                     <p>Title: {questForm.title}<br />Description: {questForm.description}<br />Location {questForm.location}<br />
                     Requirements {questForm.requirement}<br />Missable {questForm.missable}<br />
-                    Hint {questForm.hint}<br />Game: {questForm.gameId}</p>
+                    Hint {questForm.hint}<br />Game: {questForm.gameId}<br />Platforms:{questForm.platforms}<br /> Game id:{game.id}<br /> Quest Id: {editQuest.id}</p>
                     <button type='submit'>Save Changes</button>
-                    <button><Link to={`/games/${editQuest.game_id}/quests`}>Return</Link></button>
+                    <button><Link to={`/games/${game.id}/quests`}>Return</Link></button>
 
                 </form>
             </div>

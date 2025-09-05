@@ -89,6 +89,7 @@ function QuestList() {
       .then(res => res.json())
       .then(data => {
         setQuests(data);
+        console.log(data)
         setLoading(false);
       })
       .catch(err => {
@@ -110,11 +111,6 @@ function QuestList() {
               <li>Description: {quest.description}</li>
               <li>Location: {quest.location}</li>
               <li>Requirements: {quest.requirement}</li>
-              <li>Platforms: </li>
-              <ul>
-                {quest.platforms.map(qp => (
-                <li key={qp.id}>{qp.name}</li>
-              ))}</ul>
               <li>Missable: {quest.missable ? ' ✓' : ' ✗'}</li>
               <li>Completed: {quest.completed ? ' ✓' : ' ✗'}</li>
               {user?.role === 'admin' && (<li><Link to={`/quests/${quest.id}`}>Edit</Link></li>)}

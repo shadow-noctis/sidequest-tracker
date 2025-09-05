@@ -33,6 +33,7 @@ function AddQuest() {
     
     const addNewQuest = async (e) => {
         e.preventDefault();
+        console.log(questForm)
         if (!questForm.platforms || questForm.platforms.length === 0) {
             alert("Please select at least one platform.")
             return;
@@ -69,33 +70,24 @@ function AddQuest() {
     }));
     };
 
-    const handleCheckedOld = (e) => {
-        const { name, value, checked } = e.target;
-
-        setQuestForm((prev) => ({
-            ...prev,
-            [name]: checked ? [...prev[name], value] : prev[name].filter((p) => p !== value)
-        }))
-    };
-
     const handleChecked = (e) => {
-  const { name, value, checked } = e.target;
-  const id = Number(value); // convert to number if IDs are integers
+        const { name, value, checked } = e.target;
+        const id = Number(value);
 
-  setQuestForm((prev) => {
-    if (checked) {
-      return {
-        ...prev,
-        [name]: [...prev[name], id]
-      };
-    } else {
-      return {
-        ...prev,
-        [name]: prev[name].filter((p) => p !== id)
-      };
-    }
-  });
-};
+        setQuestForm((prev) => {
+            if (checked) {
+            return {
+                ...prev,
+                [name]: [...prev[name], id]
+            };
+            } else {
+            return {
+                ...prev,
+                [name]: prev[name].filter((p) => p !== id)
+            };
+            }
+        });
+        };
 
 
     const resetForm = () => {
@@ -162,7 +154,7 @@ function AddQuest() {
                     </ul>
                 </label>
                 <button type='submit'>Add Quest</button>
-                <button onClick={resetForm}>Clear</button>
+                <button type="button" onClick={resetForm}>Clear</button>
             </form>
             <p>Current choices: <br /> title: {questForm.title}<br /> description {questForm.description}<br /> location: {questForm.location}<br />
                 requirement: {questForm.requirement}<br /> missable:{questForm.missable}<br /> hint: {questForm.hint}<br /> game:{questForm.gameId}<br />

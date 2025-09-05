@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { toast } from 'react-toastify';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
 import DeleteModal from './DeleteModal'
 import ConfirmModal from './ConfirmModal'
@@ -9,6 +10,11 @@ function AddGamePlatform() {
     //User token
     const { user } = useContext(AuthContext)
     const token = localStorage.getItem('token');
+
+    //Toast
+    const navigate = useNavigate();
+    const hasShown = useRef(false)
+    const location = useLocation();
 
     const [allPlatforms, setAllPlatforms] = useState([]);
     const [games, setGames] = useState([]);
@@ -209,6 +215,15 @@ function AddGamePlatform() {
         fetchGames();
     }, [])
 
+    // Show toast when returning from successful add/edit/delete
+    useEffect(() => {
+        if (location.state?.toastMessage && !hasShown.current) {
+            toast(location.state.toastMessage);
+            hasShown.current = true;
+            navigate(location.pathname, {replace: true})
+        }
+    }, [location, navigate]);
+
     return(
         <>
             <div>
@@ -218,6 +233,7 @@ function AddGamePlatform() {
                         <ul>
                             <li key={game.name}>{game.name}
                             {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(game, 'game')}>Delete</button>)}
+                            {user?.role === 'admin' && (<Link to={`/games/${game.id}`}>Edit</Link>)}
                             </li>
                         </ul>
                     ))}
