@@ -6,13 +6,20 @@ import { toast } from "react-toastify";
 import DeleteModal from './DeleteModal'
 
 function QuestList() {
+  const location = useLocation();
   const [showModal, setShowModal] = useState(false);
-  const [selectedQuest, setSelectedQuest] = useState(null)
+  const [gameName, setGameName] = useState(location.state?.gameName);
+  // Selected quest if delete, edit etc.
+  const [selectedQuest, setSelectedQuest] = useState(null);
+
+  // Platforms related to game and currently selected platform to show
+  const [platforms, setPlatforms] = useState([]);
+  const [selectedPlatform, setSelectedPlatform] = useState(null);
 
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const { gameId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
   const hasShown = useRef(false)
 
@@ -89,7 +96,6 @@ function QuestList() {
       .then(res => res.json())
       .then(data => {
         setQuests(data);
-        console.log(data)
         setLoading(false);
       })
       .catch(err => {
@@ -98,11 +104,39 @@ function QuestList() {
       });
   }, [gameId, token, showModal]);
 
+  useEffect(() => {
+    fetch(`http://localhost:3001/api/platforms/${gameId}/quests`)
+    .then(res => res.json())
+    .then(data => {
+      console.log(data)
+      setSelectedPlatform(data[0])
+      setPlatforms(data)
+    })
+    .catch(err => {
+      console.error('Error retrieving platforms:', err);
+      setLoading(false);
+    })
+  }, [])
+
+  useEffect(() => {
+   if (!gameName) {
+    fetch(`http://localhost:3001/api/games/${gameId}/name`)
+    .then(res => res.json())
+    .then(data => {
+      console.log(data)
+      setGameName(data)
+    })
+    .catch(err => {
+      console.error('Error getting game name:', err)
+    })
+   } 
+  })
+
   if (loading) return <p>Loading quests...</p>;
 
   return (
     <div>
-      <h2>Quests</h2>
+      <h2>Quests: {gameName}</h2>
       <ul>
         {quests.map(quest => (
           <li key={quest.id}>

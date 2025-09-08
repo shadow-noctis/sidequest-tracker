@@ -27,7 +27,7 @@ function GamesList() {
             <ul>
                 {games.map(game => (
                     <li key={game.id}>
-                        <Link to={`/games/${game.id}/quests`}>{game.name}</Link>
+                        <Link to={`/games/${game.id}/quests`} state={{ gameName: game.name}}>{game.name}</Link>
                     </li>
                 ))}
             </ul>

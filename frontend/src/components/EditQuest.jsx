@@ -157,8 +157,10 @@ function EditQuest() {
                         <ul>
                         {games.map(g => (
                                 <li key={g.id}>
+                                    <label>
                                     <input name='gameId' type='radio' value={g.id} checked={questForm.gameId === g.id} onChange={handleChange} />
-                                    <label>{g.name}</label>
+                                    {g.name}
+                                    </label>
                                 </li>
                                 ))}
                         </ul>

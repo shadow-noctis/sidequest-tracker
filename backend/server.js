@@ -130,6 +130,18 @@ app.get('/api/games', (req, res) => {
   }
 });
 
+// Get gameName
+app.get('/api/games/:gameId/name', (req, res) => {
+  const gameId = req.params.gameId
+  
+  try {
+    const game = db.prepare(`SELECT name FROM games WHERE id = ?`).get(gameId)
+    res.json(game.name)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+});
+
 // Get all platforms
 app.get('/api/platforms', (req, res) => {
   try {
@@ -142,17 +154,17 @@ app.get('/api/platforms', (req, res) => {
 
 // Get platforms related to specific quest
 app.get('/api/platforms/:gameId/quests', (req, res) => {
-  const { gameId } = req.body
+  const gameId = req.params.gameId
 
   try {
     const platforms = db.prepare(`
       SELECT p.id,
       p.name
       FROM platforms p
-      LEFT JOIN game_platform gp ON gp.game_id = ?
-      WHERE qp.game_id = ?
+      LEFT JOIN game_platform gp ON p.id = gp.platform_id
+      WHERE gp.game_id = ?
       `).all(gameId)
-
+      console.log(platforms)
       res.json(platforms);
   } catch (err) {
     console.error('Error fetching platforms:', err);
@@ -426,7 +438,7 @@ app.put('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) =>
   const { name, publisher, year, platforms } = req.body;
   try{
     //Delete all connections of the game from game_platform table
-    const platformDelStmt = db.prepare(`DELETE FROM game_platform WHERE game_id = ?`).run(id)
+    const platformDelStmt = db.prepare(`DELETE FROM game_platform WHERE game_id = ?`).run(id);
 
     const platformInsertStmt = db.prepare(`
       INSERT INTO game_platform (game_id, platform_id)
