@@ -158,8 +158,8 @@ function EditQuest() {
                         {games.map(g => (
                                 <li key={g.id}>
                                     <label>
-                                    <input name='gameId' type='radio' value={g.id} checked={questForm.gameId === g.id} onChange={handleChange} />
-                                    {g.name}
+                                        <input name='gameId' type='radio' value={g.id} checked={questForm.gameId === g.id} onChange={handleChange} />
+                                        {g.name}
                                     </label>
                                 </li>
                                 ))}
@@ -170,8 +170,10 @@ function EditQuest() {
                         <ul>
                             {game.platforms.map(p => (
                                 <li key={p.id}>
-                                    <input name='platforms' type='checkbox' value={p.id} onChange={handleChecked} checked={questForm.platforms.includes(p.id)} />
-                                    <label>{p.name}</label>
+                                    <label>
+                                        <input name='platforms' type='checkbox' value={p.id} onChange={handleChecked} checked={questForm.platforms.includes(p.id)} />
+                                        {p.name}
+                                    </label>
                                 </li>
                             ))}
                         </ul>

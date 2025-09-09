@@ -136,8 +136,10 @@ function AddQuest() {
                     <ul>
                     {allGames.map(g => (
                             <li key={g.id}>
-                                <input name='gameId' type='radio' value={g.id} onChange={handleChange} checked={questForm.gameId == g.id}/>
-                                <label>{g.name}</label>
+                                <label>
+                                    <input name='gameId' type='radio' value={g.id} onChange={handleChange} checked={questForm.gameId == g.id}/>
+                                    {g.name}
+                                </label>
                             </li>     
                     ))}
                     </ul>
@@ -147,8 +149,10 @@ function AddQuest() {
                     <ul>
                     {allPlatforms.map(p => (
                         <li key={p.id}>
-                            <input name="platforms" type="checkbox" value={p.id} onChange={handleChecked} checked={questForm.platforms.includes(p.id)} />
-                            <label>{p.name}</label>
+                            <label>
+                                <input name="platforms" type="checkbox" value={p.id} onChange={handleChecked} checked={questForm.platforms.includes(p.id)} />
+                                {p.name}
+                            </label>
                         </li>
                     ))}
                     </ul>

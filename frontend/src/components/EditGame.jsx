@@ -112,8 +112,9 @@ function EditGame() {
                         <ul>
                             {platforms.map(p => (
                                 <li key={p.id}>
-                                    <input name='platforms' type='checkbox' value={p.id} onChange={handleChecked} checked={gameForm.platforms.includes(p.id)} />
-                                    <label>{p.name}</label>
+                                    <label>
+                                        <input name='platforms' type='checkbox' value={p.id} onChange={handleChecked} checked={gameForm.platforms.includes(p.id)} />
+                                        {p.name}</label>
                                 </li>
                             ))}
                         </ul>

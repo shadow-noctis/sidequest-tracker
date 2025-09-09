@@ -48,7 +48,11 @@ function QuestList() {
 
     setShowModal(false);
   }
-  
+
+  const handleClick = (e) => {
+      const { value } = e.target;
+      setSelectedPlatform(value);    
+    }
   
   // Mark as completed
   async function completeQuest(questId, currentCompleted) {
@@ -86,8 +90,6 @@ function QuestList() {
         }
     }, [location, navigate]);
 
-
-
   // Fetch quests on mount
   useEffect(() => {
     fetch(`http://localhost:3001/api/games/${gameId}/quests`, {
@@ -96,6 +98,7 @@ function QuestList() {
       .then(res => res.json())
       .then(data => {
         setQuests(data);
+        console.log(data);
         setLoading(false);
       })
       .catch(err => {
@@ -108,8 +111,7 @@ function QuestList() {
     fetch(`http://localhost:3001/api/platforms/${gameId}/quests`)
     .then(res => res.json())
     .then(data => {
-      console.log(data)
-      setSelectedPlatform(data[0])
+      setSelectedPlatform(data[0].name)
       setPlatforms(data)
     })
     .catch(err => {
@@ -130,15 +132,19 @@ function QuestList() {
       console.error('Error getting game name:', err)
     })
    } 
-  })
+  }, [])
 
   if (loading) return <p>Loading quests...</p>;
 
   return (
     <div>
       <h2>Quests: {gameName}</h2>
+      {platforms.map(p => (
+        <button key={p.id} name={p.id} value={p.name} onClick={handleClick}>{p.name}</button>
+      ))}
       <ul>
-        {quests.map(quest => (
+        {quests.filter(q => q.platforms.some(p => p.name === selectedPlatform))
+        .map(quest => (
           <li key={quest.id}>
             <strong>{quest.title}</strong>
             <ul>
