@@ -27,9 +27,16 @@ const db = new Database('./data/quest_tracker.db');
 db.exec(`
   CREATE TABLE IF NOT EXISTS games (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT UNIQUE,
+  name TEXT UNIQUE
+  );
+
+  CREATE TABLE IF NOT EXISTS versions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT,
+  release_date DATE,
   publisher TEXT,
-  release_date DATE
+  game_id INTEGER,
+  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS platforms (
@@ -77,6 +84,14 @@ db.exec(`
       FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS quest_version(
+    quest_id INTEGER,
+    version_id INTEGER,
+    PRIMARY KEY (quest_id, version_id),
+    FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE CASCADE,
+    FOREIGN KEY (version_id) REFERENCES versions(id) ON DELETE CASCADE
+  );
+  
   CREATE TABLE IF NOT EXISTS game_platform (
     game_id INTEGER,
     platform_id INTEGER,
@@ -141,6 +156,21 @@ app.get('/api/games/:gameId/name', (req, res) => {
     res.status(500).json({ error: err.message })
   }
 });
+
+// Get versions
+app.get('/api/versions/:gameId', (req, res) => {
+  const gameId = req.params.gameId
+
+  try {
+    const versions = db.prepare(`
+      SELECT v.name
+      FROM versions v
+      LEFT JOIN quest_
+      `)
+    } catch (err) {
+
+    }
+  });
 
 // Get all platforms
 app.get('/api/platforms', (req, res) => {
@@ -379,15 +409,15 @@ app.delete('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res
 
 // Add game
 app.post('/api/games', authenticateToken, requireRole('admin'), (req, res) => {
-  const { name, publisher, release_date, platforms } = req.body
+  const { name, platforms } = req.body
   try {
     //Add game to database
     const gameStmt = db.prepare(`
-      INSERT INTO games (name, publisher, release_date)
-      VALUES (?, ?, ?)
+      INSERT INTO games (name)
+      VALUES (?)
       `);
-      const games = gameStmt.run(name, publisher, release_date);
-      res.status(201).json({id: games.lastInsertRowid, message: 'Game added succesfully'});
+      const games = gameStmt.run(name);
+      res.status(201).json({id: games.lastInsertRowid, message: 'Game added successfully'});
 
     // Add id connection to game_platform table
     
@@ -435,7 +465,7 @@ app.get('/api/games/:gameId', (req, res) => {
 // Update game
 app.put('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params
-  const { name, publisher, year, platforms } = req.body;
+  const { name, platforms } = req.body;
   try{
     //Delete all connections of the game from game_platform table
     const platformDelStmt = db.prepare(`DELETE FROM game_platform WHERE game_id = ?`).run(id);
@@ -448,8 +478,8 @@ app.put('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) =>
 
     const updateStmt = db.prepare(`
       UPDATE games
-      SET name = ?, publisher = ?, release_date = ?
-      WHERE id = ?`).run(name, publisher, year, id)
+      SET name = ?
+      WHERE id = ?`).run(name, id)
 
     res.json({ message: `Game ${id} updated successfully`})
   } catch (err) {
@@ -462,6 +492,7 @@ app.put('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) =>
 app.delete('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params;
   const { force } = req.query;
+  console.log(id)
   try{
 
     const questCountStmt = db.prepare(`SELECT COUNT(*) as questCount FROM quests WHERE game_id = ?`);
@@ -478,6 +509,22 @@ app.delete('/api/games/:id', authenticateToken, requireRole('admin'), (req, res)
     res.json({ message: 'Game removed'});
   } catch (err) {
     res.status(500).json({ error: err.message})
+    console.error(err)
+  }
+})
+
+// Add Version
+app.post('/api/versions', authenticateToken, requireRole('admin'), (req, res) => {
+  const {name, publisher, year, gameId} = req.body
+  try {
+    const addVer = db.prepare(`
+      INSERT INTO versions (name, publisher, release_date, game_id)
+      VALUES (?, ?, ?, ?)
+      `).run(name, publisher, year, gameId);
+      res.status(201).json({id: addVer.lastInsertRowid, message: 'Version added successfully'});
+  } catch (err) {
+    console.error('Error adding game:', err);
+    res.status(500).json({ error: err.message })
   }
 })
 

@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
 import DeleteModal from './DeleteModal'
 import ConfirmModal from './ConfirmModal'
+import { version } from 'react';
 
 function AddGamePlatform() {
 
@@ -21,9 +22,7 @@ function AddGamePlatform() {
     
     // Game values
     const [gameName, setGameName] = useState("");
-    const [publisher, setPublisher] = useState("");
     const [platforms, setPlatforms] = useState([]);
-    const [year, setYear] = useState("");
 
     //Platform values
     const [platformName, setPlatformName] = useState("");
@@ -38,8 +37,21 @@ function AddGamePlatform() {
     // Quest count for confirmModal:
     const [questCount, setQuestCount] = useState(0);
 
+    // Version values:
+    const initialVersionForm = {
+        name: "",
+        year: "",
+        publisher: "",
+        gameId: null
+    }
+
+    const [versionForm, setVersionForm] = useState(initialVersionForm)
+
     // Add new Game
     const addGame = async () => {
+        if (!platforms) {
+            alert("Please select at least one platform")
+        }
         try{
             const gameRes = await fetch('http://localhost:3001/api/games', {
                 method: 'POST',
@@ -49,8 +61,6 @@ function AddGamePlatform() {
                 },
                 body: JSON.stringify({
                     'name': gameName,
-                    'publisher': publisher,
-                    'release_date': year,
                     'platforms': platforms
                 }),
             });
@@ -66,6 +76,36 @@ function AddGamePlatform() {
 
         } catch (err) {
             console.error('Failed to add game', err)
+        }
+    };
+
+    // Add Version
+    const addVersion = async (e) => {
+        e.preventDefault();
+        console.log("VersionForm to send: ", versionForm)
+        if (!versionForm.gameId) {
+            alert("Please select at least one game.")
+            return;
+        }
+        try{
+            const res = await fetch('http://localhost:3001/api/versions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(versionForm),
+            });
+
+            if (!res.ok) {
+                throw new Error(`Server error: ${res.status}`)
+            }
+            const data = await res.json();
+            console.log('Version added:', data);
+            resetVersion();
+            toast("Version added")
+        } catch (err) {
+            console.error('Failed to add version: ', err)
         }
     };
 
@@ -105,6 +145,7 @@ function AddGamePlatform() {
     }
     
     const deleteGame = async (game) => {
+        console.log(game.id)
         try{
             const res = await fetch(`http://localhost:3001/api/games/${game.id}`, {
                 method: 'DELETE',
@@ -113,13 +154,18 @@ function AddGamePlatform() {
                     'Authorization': `Bearer: ${token}`
                 }
             })
-            const data = await res.json()
             if (res.status == 409) {
                 console.log(`Requires confirmation: ${data.requireConfirmation}, questCount: ${data.questCount}`)
                 setQuestCount(data.questCount)
                 setConfirmModal(true)
                 return;
             }
+
+            if (!res.ok) {
+                throw new Error(`Server error ${res.status}`)
+            }
+
+            const data = await res.json()
             console.log(`${game.name} deleted.`);
             toast(`${game.name} deleted!`);
             fetchGames();
@@ -178,19 +224,30 @@ function AddGamePlatform() {
             setPlatforms((prev) => prev.filter((p) => p !== value));
         }
     };
-    
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        setVersionForm((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
     
     //Reset forms
     const resetGame = () => {
         setGameName("")
-        setPublisher("")
-        setYear("")
+        setPlatforms([])
         };
 
     const resetPlatform = () => {
         setPlatformName("")
         setManufacturer("")
         };
+
+    const resetVersion = () => {
+        setVersionForm(initialVersionForm)
+    }
 
 
     // Get platforms:
@@ -226,16 +283,15 @@ function AddGamePlatform() {
 
     return(
         <>
+        {/* Add Game*/} 
             <div>
                 <h4>Existing games</h4>
                 <ul>
                     {games.map(game => (
-                        <ul>
-                            <li key={game.name}>{game.name}
+                            <li key={game.id}>{game.name}
                             {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(game, 'game')}>Delete</button>)}
                             {user?.role === 'admin' && (<Link to={`/games/${game.id}`}>Edit</Link>)}
                             </li>
-                        </ul>
                     ))}
                 </ul>
                 <h3>Add New Game</h3>
@@ -245,39 +301,62 @@ function AddGamePlatform() {
                     value={gameName}
                     onChange={(g) => setGameName(g.target.value)}                
                 />
-                <input 
-                    type='text'
-                    placeholder='Publisher'
-                    value={publisher}
-                    onChange={(g) => setPublisher(g.target.value)}                
-                />
-                <input 
-                    type='text'
-                    placeholder='Release year'
-                    value={year}
-                    onChange={(g) => setYear(g.target.value)}                
-                />
-                {allPlatforms.map(platform => (
-                    <ul>
-                        <li key={platform.id}>
-                            <input type='checkbox' value={platform.name} onChange={handleChecked} />
-                            <label>{platform.name}</label>
-                        </li>
-                    </ ul>
-                ))}
+                <ul>
+                    {allPlatforms.map(platform => (
+                            <li key={platform.id}>
+                                <input type='checkbox' value={platform.name} onChange={handleChecked} checked={platforms.includes(platform.name)}/>
+                                <label>{platform.name}</label>
+                            </li>
+                    
+                    ))}
+                </ ul>
                 <p>Selected: {platforms.join(", ")}</p>
                 <button onClick={addGame}>Add Game</button>
             </div>
+
+            {/* Add Version*/} 
+            <div><form onSubmit={addVersion}>
+                    <h3>Add version</h3>
+                    <label>
+                        Name:
+                        <input name='name' placeholder='Name' value={versionForm.name} onChange={handleChange}/>
+                    </label>
+                    <label>
+                        Year:
+                        <input name='year' placeholder='Release Year' value={versionForm.year} onChange={handleChange} />
+                    </label>
+                    <label>
+                        Developer:
+                        <input name='publisher' placeholder='Developer' value={versionForm.publisher} onChange={handleChange} />
+                    </label>
+                    <label>
+                        Game:
+                        <ul>
+                        {games.map(g => (
+                            <li key={g.id}>
+                                <label>
+                                    <input name='gameId' type='radio' value={g.id} onChange={handleChange} checked={versionForm.gameId == g.id} />
+                                    {g.name}
+                                </label>
+                            </li>
+                        ))}
+                        </ul>
+                    </label>
+                    <p>game id: {versionForm.gameId}</p>
+                    <button type='submit'>Add Version</button>
+                    <button type='button' onClick={resetVersion}>Clear</button>
+                </form>
+            </div>
+
+            {/* Add Game*/} 
             <div>
                 <h3>Add New Platform</h3>
                 <h4>Existing Platforms</h4>
                 <ul>
                     {allPlatforms.map(platform => (
-                        <ul>
                             <li key={platform.id}>{platform.name}
                                 {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(platform, 'platform')}>Delete</button>)}
                             </li>
-                        </ul>
                         
                     ))}
                 </ul>
@@ -301,7 +380,7 @@ function AddGamePlatform() {
                     onConfirm={deletePlatform}
                     onCancel={() => setPlatformModal(false)}
                     />
-                )},
+                )}
 
                 {confirmModal && (
                     <ConfirmModal
