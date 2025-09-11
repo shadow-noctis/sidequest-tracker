@@ -38,6 +38,7 @@ function AddGamePlatform() {
     const [questCount, setQuestCount] = useState(0);
 
     // Version values:
+    const [versions, setVersions] = useState([])
     const initialVersionForm = {
         name: "",
         year: "",
@@ -45,7 +46,8 @@ function AddGamePlatform() {
         gameId: null
     }
 
-    const [versionForm, setVersionForm] = useState(initialVersionForm)
+    const [versionForm, setVersionForm] = useState(initialVersionForm);
+    const [confirmVerModal, setConfirmVerModal] = useState(false);
 
     // Add new Game
     const addGame = async () => {
@@ -82,7 +84,6 @@ function AddGamePlatform() {
     // Add Version
     const addVersion = async (e) => {
         e.preventDefault();
-        console.log("VersionForm to send: ", versionForm)
         if (!versionForm.gameId) {
             alert("Please select at least one game.")
             return;
@@ -103,6 +104,7 @@ function AddGamePlatform() {
             const data = await res.json();
             console.log('Version added:', data);
             resetVersion();
+            fetchVersions();
             toast("Version added")
         } catch (err) {
             console.error('Failed to add version: ', err)
@@ -140,8 +142,16 @@ function AddGamePlatform() {
 
     const handleDeleteClick = (to_delete, type) => {
         setSelectedDelete(to_delete)
-        type === 'game' ? deleteGame(to_delete) : setPlatformModal(true)
+        console.log("About to delete: ", to_delete)
 
+        switch(type) {
+            case 'game':
+                return deleteGame(to_delete)
+            case 'platform':
+                return setPlatformModal(true)
+            case 'version':
+                return deleteVersion(to_delete)
+        }
     }
     
     const deleteGame = async (game) => {
@@ -155,8 +165,9 @@ function AddGamePlatform() {
                 }
             })
             if (res.status == 409) {
-                console.log(`Requires confirmation: ${data.requireConfirmation}, questCount: ${data.questCount}`)
-                setQuestCount(data.questCount)
+                const data = await res.json()
+                console.log(`Requires confirmation: ${data.requireConfirmation}, verCount: ${data.versionCount}`)
+                setQuestCount(data.versionCount)
                 setConfirmModal(true)
                 return;
             }
@@ -185,12 +196,63 @@ function AddGamePlatform() {
                     'Authorization': `Bearer: ${token}`
                     }
                 });
-                console.log(`${selectedDelete.name} and ${questCount} related quests deleted`)
+                console.log(`${selectedDelete.name} and ${questCount} related versions deleted`)
                 toast(`Game deleted succesfully!`)
                 fetchGames();
+                fetchVersions();
                 setConfirmModal(false);
             } catch (err) {
                 console.log(`Error deleting game:`, err)
+            }
+        }
+
+
+const deleteVersion = async (ver) => {
+        try{
+            const res = await fetch(`http://localhost:3001/api/versions/${ver.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-type': 'application/json',
+                    'Authorization': `Bearer: ${token}`
+                }
+            })
+            if (res.status == 409) {
+                console.log(`Requires confirmation: ${data.requireConfirmation}, questCount: ${data.questCount}`)
+                setQuestCount(data.questCount)
+                setConfirmVerModal(true)
+                return;
+            }
+
+            if (!res.ok) {
+                throw new Error(`Server error ${res.status}`)
+            }
+
+            const data = await res.json()
+            console.log(`${ver.name} deleted.`);
+            toast(`${ver.name} deleted!`);
+            fetchVersions();
+            setConfirmVerModal(false);
+            return;
+        } catch (err) {
+            console.error('Failed to delete version:', err)
+        }
+    };
+
+    const forceDeleteVersion = async () => {
+        try{
+            const res = await fetch(`http://localhost:3001/api/versions/${selectedDelete.id}?force=true`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-type': 'application/json',
+                    'Authorization': `Bearer: ${token}`
+                    }
+                });
+                console.log(`${selectedDelete.name} and ${questCount} related quests deleted`)
+                toast(`Version deleted succesfully!`)
+                fetchGames();
+                setConfirmModal(false);
+            } catch (err) {
+                console.log(`Error deleting version:`, err)
             }
         }
 
@@ -251,25 +313,35 @@ function AddGamePlatform() {
 
 
     // Get platforms:
-    const fetchPlatforms = async () => {
-        const res = await fetch('http://localhost:3001/api/platforms')
+    const fetchPlatforms = () => {
+        const res = fetch('http://localhost:3001/api/platforms')
         .then(res => res.json())
         .then(data => {
             setAllPlatforms(data)
         });
     };
 
-    const fetchGames = async () => {
-        const gameres =  await fetch('http://localhost:3001/api/games')
+    const fetchGames = () => {
+        const gameres =  fetch('http://localhost:3001/api/games')
         .then(gameres => gameres.json())
         .then(data => {
             setGames(data)
         });
     }
 
+    const fetchVersions = async () => {
+        const verRes = fetch('http://localhost:3001/api/versions')
+        .then(verRes => verRes.json())
+        .then(data => {
+            setVersions(data)
+            console.log(data)
+        })
+    }
+
     useEffect(() => {
         fetchPlatforms();
         fetchGames();
+        fetchVersions();
     }, [])
 
     // Show toast when returning from successful add/edit/delete
@@ -314,8 +386,25 @@ function AddGamePlatform() {
                 <button onClick={addGame}>Add Game</button>
             </div>
 
-            {/* Add Version*/} 
-            <div><form onSubmit={addVersion}>
+            {/* Add Version*/}
+            <h3>Versions:</h3>
+            <h4>Existing versions: </h4>
+            {versions.map(ver => (
+                <div key={ver.gameName}>
+                    <h5>{ver.gameName}</h5>
+                    <ul>
+                        {ver.version.map(v => (
+                            <li key={v.id}>
+                                {v.name}
+                                {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(v, 'version')}>Delete</button>)}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ))}
+
+            <div>
+                <form onSubmit={addVersion}>
                     <h3>Add version</h3>
                     <label>
                         Name:
@@ -387,6 +476,15 @@ function AddGamePlatform() {
                     itemName={selectedDelete.name}
                     onConfirm={forceDeleteGame}
                     onCancel={() => setConfirmModal(false)}
+                    questCount={questCount}
+                    />
+                )}
+
+                {confirmVerModal && (
+                    <ConfirmModal
+                    itemName={selectedDelete.name}
+                    onConfirm={forceDeleteVer}
+                    onCancel={() => setConfirmVerModal(false)}
                     questCount={questCount}
                     />
                 )}

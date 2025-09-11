@@ -158,17 +158,42 @@ app.get('/api/games/:gameId/name', (req, res) => {
 });
 
 // Get versions
+app.get('/api/versions', (req, res) => {
+  try {
+    const versions = db.prepare(`
+        SELECT g.name as gameName,
+              json_group_array(
+                json_object(
+                  'id', v.id,
+                  'name', v.name,
+                  'year', v.release_date,
+                  'developer', v.publisher,
+                  'gameId', v.game_id
+                )
+              ) as version
+        FROM games g
+        JOIN versions v ON g.id = v.game_id
+        GROUP BY g.name;
+      `).all()
+    const parsedVersions = versions.map(v => ({ ...v, version: JSON.parse(v.version)}));
+    res.json(parsedVersions)
+  } catch (err) {
+    console.error("Error getting versions: ", err)
+    res.status(500).json({ error: err.message})
+  }
+})
+
+// Get versions (game specific)
 app.get('/api/versions/:gameId', (req, res) => {
   const gameId = req.params.gameId
 
   try {
     const versions = db.prepare(`
-      SELECT v.name
-      FROM versions v
-      LEFT JOIN quest_
-      `)
+      SELECT * FROM versions WHERE game_id = ?
+      `).all(gameId)
     } catch (err) {
-
+      console.error("Failed to fetch versions: ", err)
+      res.status(500).json({ error: err.message })
     }
   });
 
@@ -178,6 +203,7 @@ app.get('/api/platforms', (req, res) => {
     const platforms = db.prepare(`SELECT * FROM platforms`).all();
     res.json(platforms);
   } catch (err) {
+    console.error("Error fetching platforms: ", err)
     res.status(500).json({ error: err.message })
   }
 });
@@ -492,15 +518,11 @@ app.put('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) =>
 app.delete('/api/games/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params;
   const { force } = req.query;
-  console.log(id)
   try{
 
-    const questCountStmt = db.prepare(`SELECT COUNT(*) as questCount FROM quests WHERE game_id = ?`);
-    const result = questCountStmt.get(id);
-    const questCount = result.questCount;
-    console.log(questCount)
-    if (questCount > 0 && !force) {
-      return res.status(409).json({ requireConfirmation: true, questCount: questCount})
+    const verCount = db.prepare(`SELECT COUNT(*) as versionCount FROM versions WHERE game_id = ?`).get(id)
+    if (verCount.versionCount > 0 && !force) {
+      return res.status(409).json({ requireConfirmation: true, versionCount: verCount.versionCount})
     }
 
     const deleteStmt = db.prepare(`DELETE FROM games WHERE id = ?`);
@@ -525,6 +547,30 @@ app.post('/api/versions', authenticateToken, requireRole('admin'), (req, res) =>
   } catch (err) {
     console.error('Error adding game:', err);
     res.status(500).json({ error: err.message })
+  }
+})
+
+// Delete version
+app.delete('/api/versions/:id', authenticateToken, requireRole('admin'), (req, res) => {
+  const { id } = req.params;
+
+  try{
+    const quests = db.prepare(`
+      SELECT COUNT(*) as questCount
+      FROM quests q
+      LEFT JOIN quest_version qv ON q.id = qv.quest_id
+      WHERE qv.version_id = ?`).get(id);
+    console.log(quests.questCount);
+    if (quests.questCount > 0 && !force) {
+      return res.status(409).json({ requireConfirmation: true, questCount: quests.questCount})
+    }
+
+    const deleteVer = db.prepare(`DELETE FROM versions WHERE id = ?`).run(id)
+    if (deleteVer.changes === 0) return res.status(404).json({ error: 'Version not found'});
+    res.json({ message: 'Version removed'});
+  } catch (err) {
+    res.status(500).json({ error: err.message})
+    console.error(err)
   }
 })
 

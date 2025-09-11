@@ -2,7 +2,7 @@ function ConfirmModal({ itemName, onConfirm, onCancel, questCount }) {
     return(
         <div style={overlayStyle}>
             <div style={modalStyle}>
-                <h3>Delete game and all related quests?</h3>
+                <h3>Delete game/version and all related versions/quests?</h3>
                 <p>IMPORTANT: This will delete {itemName} AND {questCount} related quests</p>
                 <p>Are you sure you want delete?</p>
                 <button onClick={onConfirm} style={dangerBtn}>Delete</button>
