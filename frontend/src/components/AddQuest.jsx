@@ -11,30 +11,21 @@ function AddQuest() {
         missable: 0,
         hint: "",
         gameId: null,
-        platforms: []
+        versions: []
     };
 
-    const [questForm, setQuestForm] = useState(initialFormState)
+    const [questForm, setQuestForm] = useState(initialFormState);
 
-    const [allGames, setAllGames] = useState([])
-    const [allPlatforms, setAllPlatforms] = useState([])
+    const [allGames, setAllGames] = useState([]);
+    const [gameId, setGameId] = useState(null);
+    const [allVersions, setVersions] = useState([]);
 
     const token = localStorage.getItem('token');
-
-    // Get games
-    useEffect(() => {
-        fetchPlatforms();
-        fetch('http://localhost:3001/api/games')
-        .then(res => res.json())
-        .then(data => {
-            setAllGames(data)
-        })
-    }, [])
     
     const addNewQuest = async (e) => {
         e.preventDefault();
         console.log(questForm)
-        if (!questForm.platforms || questForm.platforms.length === 0) {
+        if (!questForm.versions || questForm.versions.length === 0) {
             alert("Please select at least one platform.")
             return;
         }
@@ -53,7 +44,7 @@ function AddQuest() {
             } 
             const data = await res.json();
             console.log('Quest added:', data);
-            resetForm()
+            resetForm();
             toast("Quest added!");
 
             } catch (error) {
@@ -61,15 +52,20 @@ function AddQuest() {
             }
         };
 
+    //Handle change missable + radiobuttons
     const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+        const { name, value, type, checked } = e.target;
+        if (name === "gameId") {
+            setGameId(value)
+        }
 
-    setQuestForm((prev) => ({
-        ...prev,
-        [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
-    }));
+        setQuestForm((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+        }));
     };
 
+    // Handle checked versions
     const handleChecked = (e) => {
         const { name, value, checked } = e.target;
         const id = Number(value);
@@ -87,7 +83,7 @@ function AddQuest() {
             };
             }
         });
-        };
+    };
 
 
     const resetForm = () => {
@@ -95,44 +91,28 @@ function AddQuest() {
         setQuestForm(initialFormState)
     };
 
-    const fetchPlatforms = async () => {
-        const res = await fetch('http://localhost:3001/api/platforms')
+    // Get games
+    useEffect(() => {
+        fetch('http://localhost:3001/api/games')
         .then(res => res.json())
         .then(data => {
-            setAllPlatforms(data)
-        });
-    };
+            setAllGames(data)
+        })
+    }, [])
+
+    useEffect(() => {
+        fetch(`http://localhost:3001/api/versions/${gameId}`)
+        .then(res => res.json())
+        .then(data => {
+            setVersions(data)
+        })
+    }, [gameId])
 
     return(
         <div>
             <h1>Add New Quest</h1>
-            <form onSubmit={addNewQuest}>
-                <label>
-                    Title:
-                    <input name="title" value={questForm.title} onChange={handleChange} />
-                </label>
-                <label>
-                    Description:
-                    <input name="description" value={questForm.description} onChange={handleChange} />
-                </label>
-                <label>
-                    Location:
-                    <input name="location" value={questForm.location} onChange={handleChange} />
-                </label>
-                <label>
-                    Requirement:
-                    <input name="requirement" value={questForm.requirement} onChange={handleChange} />
-                </label>
-                <label>
-                    Missable:
-                    <input type="checkbox" name="missable" value={questForm.missable || false} onChange={handleChange} />
-                </label>
-                <label>
-                    Hint:
-                    <input name="hint" value={questForm.hint} onChange={handleChange} />
-                </label>
-                <label>
-                    Game:
+                {/* 1. Select game */}
+                    <h3>Game:</h3>
                     <ul>
                     {allGames.map(g => (
                             <li key={g.id}>
@@ -143,26 +123,61 @@ function AddQuest() {
                             </li>     
                     ))}
                     </ul>
-                </label>
+
+                {/* 2. Select versions */}
+                {gameId && (                   
+                    <label>
+                        <h3>Versions: </h3>
+                        <ul>
+                        {allVersions.map(v => (
+                            <li key={v.id}>
+                                <label>
+                                    <input name="versions" type="checkbox" value={v.id} onChange={handleChecked} checked={questForm.versions.includes(v.id)} />
+                                    {v.name}
+                                </label>
+                            </li>
+                        ))}
+                        </ul>
+                    </label>)}
+                {/* 3. Fill out necessary fields */}
+                {questForm.versions.length > 0 ? (
+                    <form onSubmit={addNewQuest}>
+                    <h3>Info</h3>
                 <label>
-                    Platforms:
-                    <ul>
-                    {allPlatforms.map(p => (
-                        <li key={p.id}>
-                            <label>
-                                <input name="platforms" type="checkbox" value={p.id} onChange={handleChecked} checked={questForm.platforms.includes(p.id)} />
-                                {p.name}
-                            </label>
-                        </li>
-                    ))}
-                    </ul>
-                </label>
+                    Title:
+                    <input name="title" value={questForm.title} onChange={handleChange} />
+                </label><br />
+                <label>
+                    Description:
+                    <input name="description" value={questForm.description} onChange={handleChange} />
+                </label><br />
+                <label>
+                    Location:
+                    <input name="location" value={questForm.location} onChange={handleChange} />
+                </label><br />
+                <label>
+                    Requirement:
+                    <input name="requirement" value={questForm.requirement} onChange={handleChange} />
+                </label><br />
+                <label>
+                    Missable:
+                    <input type="checkbox" name="missable" value={questForm.missable || false} onChange={handleChange} />
+                </label><br />
+                <label>
+                    Hint:
+                    <input name="hint" value={questForm.hint} onChange={handleChange} />
+                </label><br />
+
                 <button type='submit'>Add Quest</button>
                 <button type="button" onClick={resetForm}>Clear</button>
+
+
             </form>
+                ) : ("Select game and version")}
+
             <p>Current choices: <br /> title: {questForm.title}<br /> description {questForm.description}<br /> location: {questForm.location}<br />
-                requirement: {questForm.requirement}<br /> missable:{questForm.missable}<br /> hint: {questForm.hint}<br /> game:{questForm.gameId}<br />
-                platforms: {questForm.platforms}
+                requirement: {questForm.requirement}<br /> missable:{questForm.missable}<br /> hint: {questForm.hint}<br /> game ID:{questForm.gameId}<br />
+                versions: {questForm.versions}
             </p>
         </div>
     );

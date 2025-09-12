@@ -7,6 +7,7 @@ const fs = require('fs');
 const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken');
 const { release } = require('os');
+const { json } = require('stream/consumers');
 const jwtSecret = process.env.JWT_SECRET;
 
 const app = express();
@@ -157,7 +158,7 @@ app.get('/api/games/:gameId/name', (req, res) => {
   }
 });
 
-// Get versions
+// Get versions, grouped by gameName
 app.get('/api/versions', (req, res) => {
   try {
     const versions = db.prepare(`
@@ -189,8 +190,9 @@ app.get('/api/versions/:gameId', (req, res) => {
 
   try {
     const versions = db.prepare(`
-      SELECT * FROM versions WHERE game_id = ?
+      SELECT * FROM versions WHERE game_id = ? GROUP BY id
       `).all(gameId)
+      res.json(versions)
     } catch (err) {
       console.error("Failed to fetch versions: ", err)
       res.status(500).json({ error: err.message })
@@ -285,18 +287,18 @@ app.get('/api/games/:gameId/quests', (req, res) => {
                     ELSE IFNULL(uq.completed, 0)
                   END AS completed,
             json_group_array(
-              json_object('id', p.id, 'name', p.name)
-              ) as platforms
+              json_object('id', v.id, 'name', v.name)
+              ) as versions
             FROM quests q
-            LEFT JOIN quest_platform qp ON q.id = qp.quest_id
-            LEFT JOIN platforms p ON qp.platform_id = p.id
+            LEFT JOIN quest_version qv ON q.id = qv.quest_id
+            LEFT JOIN versions v ON qv.version_id = v.id
             LEFT JOIN user_quests uq 
                   ON q.id = uq.quest_id AND uq.user_id = ?
             WHERE q.game_id = ?
             GROUP BY q.id
         `).all(userId, userId, gameId)
-        const parsedQuests = quests.map(quest => ({ ...quest, platforms: JSON.parse(quest.platforms), completed: !!quest.completed}));
-
+        const parsedQuests = quests.map(quest => ({ ...quest, versions: JSON.parse(quest.versions), completed: !!quest.completed}));
+        console.log(parsedQuests)
         res.json(parsedQuests);
   } catch (err) {
     console.error('Error fetching quests:', err);
@@ -355,11 +357,11 @@ app.get('/api/achievements', (req, res) => {
   }
 });
 
-// Add a new quest
+// Add quest
 app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
-  const { title, description, requirement, location, missable, gameId, hint, platforms } = req.body;
+  const { title, description, requirement, location, missable, gameId, hint, versions } = req.body;
 
-  if (!platforms || platforms.length === 0) {
+  if (!versions || versions.length === 0) {
     return res.status(400).json({ error: "At least one platform must be selected." });
   }
   try {
@@ -372,10 +374,10 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
 
 
       const qpStmt = db.prepare(`
-        INSERT INTO quest_platform (quest_id, platform_id)
+        INSERT INTO quest_version (quest_id, version_id)
         VALUES (?, ?)
         `);
-      platforms.forEach(pid => qpStmt.run(quest.lastInsertRowid, pid))
+      versions.forEach(vId => qpStmt.run(quest.lastInsertRowid, vId))
 
 
       res.status(201).json({ id: quest.lastInsertRowid, message: 'Quest added succesfully' });

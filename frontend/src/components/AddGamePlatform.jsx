@@ -4,7 +4,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
 import DeleteModal from './DeleteModal'
 import ConfirmModal from './ConfirmModal'
-import { version } from 'react';
 
 function AddGamePlatform() {
 
@@ -483,7 +482,7 @@ const deleteVersion = async (ver) => {
                 {confirmVerModal && (
                     <ConfirmModal
                     itemName={selectedDelete.name}
-                    onConfirm={forceDeleteVer}
+                    onConfirm={forceDeleteVersion}
                     onCancel={() => setConfirmVerModal(false)}
                     questCount={questCount}
                     />

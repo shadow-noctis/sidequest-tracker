@@ -12,9 +12,9 @@ function QuestList() {
   // Selected quest if delete, edit etc.
   const [selectedQuest, setSelectedQuest] = useState(null);
 
-  // Platforms related to game and currently selected platform to show
-  const [platforms, setPlatforms] = useState([]);
-  const [selectedPlatform, setSelectedPlatform] = useState(null);
+  // Versions related to game and currently selected platform to show
+  const [versions, setVersions] = useState([]);
+  const [selectedVersion, setSelectedVersion] = useState(null);
 
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +51,7 @@ function QuestList() {
 
   const handleClick = (e) => {
       const { value } = e.target;
-      setSelectedPlatform(value);    
+      setSelectedVersion(value);    
     }
   
   // Mark as completed
@@ -98,7 +98,7 @@ function QuestList() {
       .then(res => res.json())
       .then(data => {
         setQuests(data);
-        console.log(data);
+        console.log("Quests: ", data);
         setLoading(false);
       })
       .catch(err => {
@@ -107,25 +107,29 @@ function QuestList() {
       });
   }, [gameId, token, showModal]);
 
+
+  // Get versions
   useEffect(() => {
-    fetch(`http://localhost:3001/api/platforms/${gameId}/quests`)
+    fetch(`http://localhost:3001/api/versions/${gameId}`)
     .then(res => res.json())
     .then(data => {
-      setSelectedPlatform(data[0].name)
-      setPlatforms(data)
+      console.log("Versions:", data)
+      setSelectedVersion(data[0].name)
+      setVersions(data)
     })
     .catch(err => {
-      console.error('Error retrieving platforms:', err);
+      console.error('Error retrieving versions:', err);
       setLoading(false);
     })
   }, [])
 
+  //Get game name if not set
   useEffect(() => {
    if (!gameName) {
     fetch(`http://localhost:3001/api/games/${gameId}/name`)
     .then(res => res.json())
     .then(data => {
-      console.log(data)
+      console.log("GameName: ", data)
       setGameName(data)
     })
     .catch(err => {
@@ -138,12 +142,12 @@ function QuestList() {
 
   return (
     <div>
-      <h2>Quests: {gameName}</h2>
-      {platforms.map(p => (
-        <button key={p.id} name={p.id} value={p.name} onClick={handleClick}>{p.name}</button>
+      <h2>{gameName}</h2>
+      {versions.map(v => (
+        <button key={v.id} name={v.id} value={v.name} onClick={handleClick}>{v.name}</button>
       ))}
       <ul>
-        {quests.filter(q => q.platforms.some(p => p.name === selectedPlatform))
+        {quests.filter(q => q.versions.some(v => v.name === selectedVersion))
         .map(quest => (
           <li key={quest.id}>
             <strong>{quest.title}</strong>
