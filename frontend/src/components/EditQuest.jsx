@@ -5,12 +5,11 @@ import { Link } from 'react-router-dom'
 function EditQuest() {
     const token = localStorage.getItem('token');
 
-    const [games, setGames] = useState(null);
-    const [game, setGame] = useState(null);
-
     const [editQuest, setEditQuest] = useState(null);
     const { questId } = useParams();
     const navigate = useNavigate();
+
+    const [versions, setVersions] = useState([])
     const [questForm, setQuestForm] = useState({
         title: "",
         description: "",
@@ -18,31 +17,39 @@ function EditQuest() {
         requirement: "",
         missable: 0,
         hint: "",
-        gameName: "",
         gameId: null,
-        platforms: []
+        versions: []
     });
 
     useEffect(() => {
         fetch(`http://localhost:3001/api/quests/${questId}`)
             .then((res) => res.json())
             .then((data) => {
-                setEditQuest(data.quest);
+                setEditQuest(data);
                 console.log(data)
-                setGame(data.game)
                 setQuestForm({
-                    title: data.quest.title,
-                    description: data.quest.description,
-                    location: data.quest.location,
-                    requirement: data.quest.requirement,
-                    missable: data.quest.missable === 1,
-                    hint: data.quest.hint,
-                    gameId: data.game.id,
-                    id: data.quest.id,
-                    platforms: data.quest.platforms.map(p => p.id)
+                    title: data.title,
+                    description: data.description,
+                    location: data.location,
+                    requirement: data.requirement,
+                    missable: data.missable === 1,
+                    hint: data.hint,
+                    gameId: data.game_id,
+                    id: data.id,
+                    versions: data.versions.map(v => v.id)
                 });
             });
     }, [questId]);
+
+    useEffect(() => {
+        if (editQuest) {
+        console.log("Edit quest:", editQuest)
+        fetch(`http://localhost:3001/api/versions/${editQuest.game_id}`)
+        .then((res) => res.json())
+        .then((data) => {
+            setVersions(data)
+        })}
+    }, [editQuest])
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -89,27 +96,7 @@ function EditQuest() {
         }
     };
 
-    //Fetch info on mount
-    useEffect(() => {
-        fetchGames();
-        fetch(`http://localhost:3001/api/quests/${questId}`)
-        .then(res => res.json())
-        .then(data => {
-            setEditQuest(data.quest);
-        })
-        .catch(err => {
-            console.error('Error fetching quest:', err);
-        });
-    }, []);
-
-    //Fetch all games
-    const fetchGames = async () => {
-        const gameres =  await fetch('http://localhost:3001/api/games')
-        const gameData = await gameres.json();
-        setGames(gameData);
-    }
-
-    if (!editQuest || !games) return <p>Loading quest...</p>;
+    if (!editQuest) return <p>Loading quest...</p>;
 
     return(
         <>
@@ -123,7 +110,6 @@ function EditQuest() {
                     <li>Requirements: {editQuest.requirement}</li>
                     <li>Missable: {editQuest.missable === 1 ? "✓" : ""}</li>
                     <li>Hint: {editQuest.hint}</li>
-                    <li>Game: {game.gameName}</li>
                 </ul>
             </div>
             <div>
@@ -153,26 +139,13 @@ function EditQuest() {
                         <textarea name="hint" value={questForm.hint} onChange={handleChange} />
                     </label>
                     <label>
-                        Games:
+                        Versions:
                         <ul>
-                        {games.map(g => (
-                                <li key={g.id}>
+                            {versions.map(v => (
+                                <li key={v.id}>
                                     <label>
-                                        <input name='gameId' type='radio' value={g.id} checked={questForm.gameId === g.id} onChange={handleChange} />
-                                        {g.name}
-                                    </label>
-                                </li>
-                                ))}
-                        </ul>
-                    </label>
-                    <label>
-                        Platforms:
-                        <ul>
-                            {game.platforms.map(p => (
-                                <li key={p.id}>
-                                    <label>
-                                        <input name='platforms' type='checkbox' value={p.id} onChange={handleChecked} checked={questForm.platforms.includes(p.id)} />
-                                        {p.name}
+                                        <input name='versions' type='checkbox' value={v.id} onChange={handleChecked} checked={questForm.versions.includes(v.id)} />
+                                        {v.name}
                                     </label>
                                 </li>
                             ))}
@@ -180,9 +153,9 @@ function EditQuest() {
                     </label>
                     <p>Title: {questForm.title}<br />Description: {questForm.description}<br />Location {questForm.location}<br />
                     Requirements {questForm.requirement}<br />Missable {questForm.missable}<br />
-                    Hint {questForm.hint}<br />Game: {questForm.gameId}<br />Platforms:{questForm.platforms}<br /> Game id:{game.id}<br /> Quest Id: {editQuest.id}</p>
+                    Hint {questForm.hint}<br />Game: {questForm.gameId}<br />Platforms:{questForm.platforms}<br /> Quest Id: {editQuest.id}</p>
                     <button type='submit'>Save Changes</button>
-                    <button><Link to={`/games/${game.id}/quests`}>Return</Link></button>
+                    <button type='button'><Link to={`/games/${editQuest.game_id}/quests`}>Return</Link></button>
 
                 </form>
             </div>

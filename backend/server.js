@@ -311,36 +311,22 @@ app.get('/api/quests/:questId', (req, res) => {
   const questId = req.params.questId;
   
   try {
-    // Get game related info with platforms
-    const gameIdStmt = db.prepare(`SELECT game_id FROM quests WHERE id = ?`);
-    const gameId = gameIdStmt.get(questId);
-    const game = db.prepare(`
-      SELECT g.name,
-      g.id,
-      json_group_array(
-        json_object('id', p.id, 'name', p.name)
-        ) as platforms
-      FROM games g
-      LEFT JOIN game_platform gp ON gp.game_id = g.id
-      LEFT JOIN platforms p ON gp.platform_id = p.id
-      WHERE g.id = ?
-      GROUP BY g.id
-      `).get(gameId.game_id);
-
-    // Get quest related info with platforms
+    // Get quest related info with versions
     const quest = db.prepare(`
       SELECT q.*,
+      g.name as gameName,
       json_group_array(
-        json_object('id', p.id, 'name', p.name)
-        ) as platforms
+        json_object('id', v.id, 'name', v.name)
+        ) as versions
       FROM quests q
-      LEFT JOIN quest_platform qp ON q.id = qp.quest_id
-      LEFT JOIN platforms p ON qp.platform_id = p.id
+      LEFT JOIN quest_version qv ON q.id = qv.quest_id
+      LEFT JOIN versions v ON qv.version_id = v.id
+      LEFT JOIN games g ON q.game_id = g.id
       WHERE q.id = ?
       GROUP BY q.id
       `).get(questId)
 
-    res.json({quest: {...quest, platforms : JSON.parse(quest.platforms)}, game: {...game, platforms : JSON.parse(game.platforms)}});
+    res.json({...quest, versions : JSON.parse(quest.versions)});
   } catch (err) {
     console.error('Error fetching quest', err);
     res.status(500).json({ error: err.message })
@@ -390,7 +376,7 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
 // Update quest
 app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params;
-  let { title, description, requirement, location, missable, hint, gameId, platforms } = req.body
+  let { title, description, requirement, location, missable, hint, gameId, versions } = req.body
 
   try {
 
@@ -398,15 +384,15 @@ app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) =
       missable = missable ? 1: 0;
     }
 
-    const platformDel = db.prepare(`
-      DELETE FROM quest_platform WHERE quest_id = ?
+    const VerDel = db.prepare(`
+      DELETE FROM quest_version WHERE quest_id = ?
       `).run(id)
 
-    const platformInsertStmt = db.prepare(`
-      INSERT INTO quest_platform (quest_id, platform_id)
+    const verInsertStmt = db.prepare(`
+      INSERT INTO quest_version (quest_id, version_id)
       VALUES (?, ?)
       `);
-      platforms.forEach(pid => platformInsertStmt.run(id, pid));
+      versions.forEach(vid => verInsertStmt.run(id, vid));
     
     const updateStmt = db.prepare(`
       UPDATE quests
@@ -522,9 +508,10 @@ app.delete('/api/games/:id', authenticateToken, requireRole('admin'), (req, res)
   const { force } = req.query;
   try{
 
-    const verCount = db.prepare(`SELECT COUNT(*) as versionCount FROM versions WHERE game_id = ?`).get(id)
-    if (verCount.versionCount > 0 && !force) {
-      return res.status(409).json({ requireConfirmation: true, versionCount: verCount.versionCount})
+    const count = db.prepare(`SELECT COUNT(*) as questCount FROM quests WHERE game_id = ?`).get(id)
+    if (count.questCount > 0 && !force) {
+      console.log(count.questCount)
+      return res.status(409).json({ requireConfirmation: true, questCount: count.questCount})
     }
 
     const deleteStmt = db.prepare(`DELETE FROM games WHERE id = ?`);
@@ -555,6 +542,7 @@ app.post('/api/versions', authenticateToken, requireRole('admin'), (req, res) =>
 // Delete version
 app.delete('/api/versions/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params;
+  const { force } = req.query;
 
   try{
     const quests = db.prepare(`

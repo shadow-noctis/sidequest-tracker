@@ -154,7 +154,6 @@ function AddGamePlatform() {
     }
     
     const deleteGame = async (game) => {
-        console.log(game.id)
         try{
             const res = await fetch(`http://localhost:3001/api/games/${game.id}`, {
                 method: 'DELETE',
@@ -165,8 +164,8 @@ function AddGamePlatform() {
             })
             if (res.status == 409) {
                 const data = await res.json()
-                console.log(`Requires confirmation: ${data.requireConfirmation}, verCount: ${data.versionCount}`)
-                setQuestCount(data.versionCount)
+                console.log(`Requires confirmation: ${data.requireConfirmation}, questCount: ${data.questCount}`)
+                setQuestCount(data.questCount)
                 setConfirmModal(true)
                 return;
             }
@@ -195,7 +194,7 @@ function AddGamePlatform() {
                     'Authorization': `Bearer: ${token}`
                     }
                 });
-                console.log(`${selectedDelete.name} and ${questCount} related versions deleted`)
+                console.log(`${selectedDelete.name} and ${questCount} quests deleted`)
                 toast(`Game deleted succesfully!`)
                 fetchGames();
                 fetchVersions();
@@ -216,6 +215,7 @@ const deleteVersion = async (ver) => {
                 }
             })
             if (res.status == 409) {
+                const data = await res.json();
                 console.log(`Requires confirmation: ${data.requireConfirmation}, questCount: ${data.questCount}`)
                 setQuestCount(data.questCount)
                 setConfirmVerModal(true)
@@ -248,8 +248,8 @@ const deleteVersion = async (ver) => {
                 });
                 console.log(`${selectedDelete.name} and ${questCount} related quests deleted`)
                 toast(`Version deleted succesfully!`)
-                fetchGames();
-                setConfirmModal(false);
+                fetchVersions();
+                setConfirmVerModal(false);
             } catch (err) {
                 console.log(`Error deleting version:`, err)
             }
