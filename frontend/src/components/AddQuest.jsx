@@ -11,13 +11,15 @@ function AddQuest() {
         missable: 0,
         hint: "",
         gameId: null,
-        versions: []
+        versions: [],
+        extras: {}
     };
 
     const [questForm, setQuestForm] = useState(initialFormState);
 
     const [allGames, setAllGames] = useState([]);
     const [gameId, setGameId] = useState(null);
+    const [selectedVer, setSelectedVer] = useState(null)
     const [allVersions, setVersions] = useState([]);
 
     const token = localStorage.getItem('token');
@@ -65,6 +67,23 @@ function AddQuest() {
         }));
     };
 
+    const handleExtraChange = (e) => {
+        const { name, value } = e.target;
+
+        // Handle extras
+        if (selectedVer?.extras.includes(name)) {
+            setQuestForm((prev) => ({
+            ...prev,
+            extras: {
+                ...(prev.extras || {}), // ensure it's an object
+                [name]: value,
+            },
+            }));
+            return;
+            }
+        };
+
+
     // Handle checked versions
     const handleChecked = (e) => {
         const { name, value, checked } = e.target;
@@ -104,9 +123,23 @@ function AddQuest() {
         fetch(`http://localhost:3001/api/versions/${gameId}`)
         .then(res => res.json())
         .then(data => {
+            console.log(data)
             setVersions(data)
         })
     }, [gameId])
+
+    useEffect(() => {
+    if (questForm.versions.length > 0) {
+        const firstSelected = allVersions.find(v => questForm.versions.includes(v.id));
+        if (firstSelected) {
+        // Ensure extras is an array of strings (field names)
+        setSelectedVer({
+            ...firstSelected,
+            extras: Array.isArray(firstSelected.extras) ? firstSelected.extras : [],
+        });
+        }
+    }
+    }, [questForm.versions]);
 
     return(
         <div>
@@ -125,7 +158,7 @@ function AddQuest() {
                     </ul>
 
                 {/* 2. Select versions */}
-                {gameId && (                   
+                {questForm.gameId && (               
                     <label>
                         <h3>Versions: </h3>
                         <ul>
@@ -167,6 +200,16 @@ function AddQuest() {
                     Hint:
                     <input name="hint" value={questForm.hint} onChange={handleChange} />
                 </label><br />
+                    {selectedVer && selectedVer.extras.map(extraName => (
+                    <label key={extraName}>
+                        {extraName}:
+                        <input
+                        name={extraName}
+                        value={questForm.extras?.[extraName] || ""}
+                        onChange={handleExtraChange}
+                        />
+                    </label>
+                    ))}
 
                 <button type='submit'>Add Quest</button>
                 <button type="button" onClick={resetForm}>Clear</button>
@@ -177,7 +220,7 @@ function AddQuest() {
 
             <p>Current choices: <br /> title: {questForm.title}<br /> description {questForm.description}<br /> location: {questForm.location}<br />
                 requirement: {questForm.requirement}<br /> missable:{questForm.missable}<br /> hint: {questForm.hint}<br /> game ID:{questForm.gameId}<br />
-                versions: {questForm.versions}
+                versions: {questForm.versions}<br />
             </p>
         </div>
     );

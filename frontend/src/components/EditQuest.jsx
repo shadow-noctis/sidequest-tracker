@@ -96,7 +96,7 @@ function EditQuest() {
         }
     };
 
-    if (!editQuest) return <p>Loading quest...</p>;
+    if (!editQuest || !versions) return <p>Loading quest...</p>;
 
     return(
         <>
@@ -117,27 +117,32 @@ function EditQuest() {
                     <label>
                         Title:
                         <input name="title" value={questForm.title} onChange={handleChange} />
-                    </label>
+                    </label><br />
                     <label>
                         Description:
                         <textarea name="description" value={questForm.description} onChange={handleChange} />
-                    </label>
+                    </label><br />
                     <label>
                         Location:
                         <input name="location" value={questForm.location} onChange={handleChange} />
-                    </label>
+                    </label><br />
                     <label>
                         Requirements:
                         <input name="requirement" value={questForm.requirement} onChange={handleChange} />
-                    </label>
+                    </label><br />
                     <label>
                         Missable:
                         <input type="checkbox" name="missable" value={questForm.missable === 1} onChange={handleChange} />
-                    </label>
+                    </label><br />
                     <label>
                         Hint:
                         <textarea name="hint" value={questForm.hint} onChange={handleChange} />
-                    </label>
+                    </label><br />
+                    <label>
+                        Game: <br />
+                        <input name='gameId' value={questForm.gameId} type='radio' disabled={true} checked={true}/>
+                        {editQuest.gameName}
+                    </label><br />
                     <label>
                         Versions:
                         <ul>
@@ -150,7 +155,7 @@ function EditQuest() {
                                 </li>
                             ))}
                         </ul>
-                    </label>
+                    </label><br />
                     <p>Title: {questForm.title}<br />Description: {questForm.description}<br />Location {questForm.location}<br />
                     Requirements {questForm.requirement}<br />Missable {questForm.missable}<br />
                     Hint {questForm.hint}<br />Game: {questForm.gameId}<br />Platforms:{questForm.platforms}<br /> Quest Id: {editQuest.id}</p>

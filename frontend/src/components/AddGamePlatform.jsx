@@ -42,7 +42,8 @@ function AddGamePlatform() {
         name: "",
         year: "",
         publisher: "",
-        gameId: null
+        gameId: null,
+        extras: []
     }
 
     const [versionForm, setVersionForm] = useState(initialVersionForm);
@@ -94,7 +95,10 @@ function AddGamePlatform() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify(versionForm),
+                body: JSON.stringify({
+                    ...versionForm,
+                    extras: JSON.stringify(versionForm.extras)
+                }),
             });
 
             if (!res.ok) {
@@ -294,6 +298,27 @@ const deleteVersion = async (ver) => {
             [name]: value,
         }));
     };
+
+    const addExtra = () => {
+        setVersionForm(prev => ({ ...prev, extras: [...prev.extras, ""] }));
+        };
+
+    const handleExtraChange = (index, value) => {
+        setVersionForm(prev => {
+            const newExtras = [...prev.extras];
+            newExtras[index] = value;
+            return { ...prev, extras: newExtras };
+        });
+        };
+
+    const removeExtra = (index) => {
+        setVersionForm(prev => ({
+            ...prev,
+            extras: prev.extras.filter((_, i) => i !== index)
+        }));
+        };
+
+    
     
     //Reset forms
     const resetGame = () => {
@@ -333,7 +358,7 @@ const deleteVersion = async (ver) => {
         .then(verRes => verRes.json())
         .then(data => {
             setVersions(data)
-            console.log(data)
+            console.log("versions: ", data)
         })
     }
 
@@ -408,29 +433,45 @@ const deleteVersion = async (ver) => {
                     <label>
                         Name:
                         <input name='name' placeholder='Name' value={versionForm.name} onChange={handleChange}/>
-                    </label>
+                    </label><br />
                     <label>
                         Year:
                         <input name='year' placeholder='Release Year' value={versionForm.year} onChange={handleChange} />
-                    </label>
+                    </label><br />
                     <label>
                         Developer:
                         <input name='publisher' placeholder='Developer' value={versionForm.publisher} onChange={handleChange} />
-                    </label>
+                    </label><br />
                     <label>
                         Game:
-                        <ul>
-                        {games.map(g => (
-                            <li key={g.id}>
-                                <label>
-                                    <input name='gameId' type='radio' value={g.id} onChange={handleChange} checked={versionForm.gameId == g.id} />
-                                    {g.name}
-                                </label>
-                            </li>
+                        <select name='gameId' value={versionForm.gameId || ""} onChange={handleChange}>
+                        <option value="">
+                            -- Select a Game --
+                        </option>
+                        {games.map((g) => (
+                            <option key={g.id} value={g.id}>
+                                {g.name}
+                            </option>
                         ))}
-                        </ul>
-                    </label>
-                    <p>game id: {versionForm.gameId}</p>
+                        </select>
+                    </label><br />
+
+                    <label>
+                    Extras:
+                        {versionForm.extras.map((extra, idx) => (
+                            <div key={idx}>
+                                <input
+                                    type='text'
+                                    placeholder='Extra field name'
+                                    value={extra}
+                                    onChange={e => handleExtraChange(idx, e.target.value)}
+                                    />
+                                    <button type='button' onClick={() => removeExtra(idx)}>Delete</button>
+                            </div>
+                        ))}
+                        <button type='button' onClick={addExtra}>Add Extra</button><br />
+                        <p>Extras: {versionForm.extras}</p>
+                    </label><br />
                     <button type='submit'>Add Version</button>
                     <button type='button' onClick={resetVersion}>Clear</button>
                 </form>

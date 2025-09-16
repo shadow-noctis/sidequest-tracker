@@ -36,6 +36,7 @@ db.exec(`
   name TEXT,
   release_date DATE,
   publisher TEXT,
+  extras TEXT,
   game_id INTEGER,
   FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE
   );
@@ -55,6 +56,7 @@ db.exec(`
     location TEXT,
     requirement TEXT,
     hint TEXT,
+    extras TEXT,
     FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE
   );
 
@@ -169,14 +171,21 @@ app.get('/api/versions', (req, res) => {
                   'name', v.name,
                   'year', v.release_date,
                   'developer', v.publisher,
-                  'gameId', v.game_id
+                  'gameId', v.game_id,
+                  'extras', v.extras
                 )
               ) as version
         FROM games g
         JOIN versions v ON g.id = v.game_id
         GROUP BY g.name;
       `).all()
-    const parsedVersions = versions.map(v => ({ ...v, version: JSON.parse(v.version)}));
+    const parsedVersions = versions.map(v => {
+      const parsedVersionArr = JSON.parse(v.version).map(ver => ({
+        ...ver,
+        extras: ver.extras ? JSON.parse(ver.extras) : []
+      }));
+      return {...v, version: parsedVersionArr};
+    });
     res.json(parsedVersions)
   } catch (err) {
     console.error("Error getting versions: ", err)
@@ -192,7 +201,8 @@ app.get('/api/versions/:gameId', (req, res) => {
     const versions = db.prepare(`
       SELECT * FROM versions WHERE game_id = ? GROUP BY id
       `).all(gameId)
-      res.json(versions)
+    const parsedVersions = versions.map(v => ({...v, extras: JSON.parse(v.extras)}));
+      res.json(parsedVersions)
     } catch (err) {
       console.error("Failed to fetch versions: ", err)
       res.status(500).json({ error: err.message })
@@ -526,12 +536,12 @@ app.delete('/api/games/:id', authenticateToken, requireRole('admin'), (req, res)
 
 // Add Version
 app.post('/api/versions', authenticateToken, requireRole('admin'), (req, res) => {
-  const {name, publisher, year, gameId} = req.body
+  const {name, publisher, year, gameId, extras} = req.body
   try {
     const addVer = db.prepare(`
-      INSERT INTO versions (name, publisher, release_date, game_id)
-      VALUES (?, ?, ?, ?)
-      `).run(name, publisher, year, gameId);
+      INSERT INTO versions (name, publisher, release_date, game_id, extras)
+      VALUES (?, ?, ?, ?, ?)
+      `).run(name, publisher, year, gameId, extras);
       res.status(201).json({id: addVer.lastInsertRowid, message: 'Version added successfully'});
   } catch (err) {
     console.error('Error adding game:', err);
