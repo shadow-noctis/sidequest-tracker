@@ -9,7 +9,8 @@ function EditQuest() {
     const { questId } = useParams();
     const navigate = useNavigate();
 
-    const [versions, setVersions] = useState([])
+    const [versions, setVersions] = useState([]);
+    const [initialVersions, setInitialVersions] = useState([])
     const [questForm, setQuestForm] = useState({
         title: "",
         description: "",
@@ -18,7 +19,8 @@ function EditQuest() {
         missable: 0,
         hint: "",
         gameId: null,
-        versions: []
+        versions: [],
+        extras: {}
     });
 
     useEffect(() => {
@@ -36,8 +38,10 @@ function EditQuest() {
                     hint: data.hint,
                     gameId: data.game_id,
                     id: data.id,
-                    versions: data.versions.map(v => v.id)
+                    versions: data.versions.map(v => v.id),
+                    extras: data.extras
                 });
+                setInitialVersions(data.versions.map(ver => ver.id))
             });
     }, [questId]);
 
@@ -53,29 +57,50 @@ function EditQuest() {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setQuestForm((prev) =>({
-            ...prev,
-            [name]: type === "checkbox" ? (checked ? 1 : 0) : (name === "gameId" ? Number(value) : value),
-        }));
-    };
-
-    const handleChecked = (e) => {
-        const { name, value, checked } = e.target;
-        const id = Number(value);
-
-        setQuestForm((prev) => {
-            if (checked) {
-            return {
+        if (name === "missable") {
+            setQuestForm((prev) => ({
                 ...prev,
-                [name]: [...prev[name], id]
-            };
-            } else {
-            return {
+                missable: checked ? 1 : 0
+            }));
+            return;
+        }
+        if (name === "gameId") {
+            setQuestForm((prev) => ({
                 ...prev,
-                [name]: prev[name].filter((p) => p !== id)
-            };
-            }
-        });
+                gameId: Number(value)
+            }));
+            return;
+        }
+
+        if (name === "versions") {
+            const id = Number(value);
+            setQuestForm((prev) => {
+                if (checked) {
+                    return {
+                        ...prev,
+                        [name]: [...prev[name], id]
+                    }
+                } else {
+                    return {
+                        ...prev,
+                        [name]: prev[name].filter((p) => p !== id)
+                    };
+                }
+            });
+        }
+
+        if (Object.keys(editQuest?.extras)?.includes(name)) {
+            setQuestForm((prev) => ({
+                ...prev,
+                extras: {
+                    ...prev.extras,
+                    [name]: value
+                }
+            }));
+            return
+        }
+
+        setQuestForm((prev) =>({...prev, [name]: value}));
         };
 
     const handleSubmit = async (e) => {
@@ -87,7 +112,10 @@ function EditQuest() {
                     "Content-Type": "application/json",
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(questForm),
+                body: JSON.stringify({
+                    ...questForm,
+                    extras: JSON.stringify(questForm.extras)
+                }),
             });
             if (!res.ok) throw new Error("Failed to update quest")
                 navigate(`/games/${editQuest.game_id}/quests`, { state: {toastMessage: 'Quest updated!'}});
@@ -110,6 +138,9 @@ function EditQuest() {
                     <li>Requirements: {editQuest.requirement}</li>
                     <li>Missable: {editQuest.missable === 1 ? "✓" : ""}</li>
                     <li>Hint: {editQuest.hint}</li>
+                    {editQuest.extras && Object.entries(editQuest.extras).map(([key, value]) =>
+                    <li key={key}>{key}: {value}</li>
+                    )}
                 </ul>
             </div>
             <div>
@@ -139,6 +170,14 @@ function EditQuest() {
                         <textarea name="hint" value={questForm.hint} onChange={handleChange} />
                     </label><br />
                     <label>
+                    <div id='extras'>
+                        {questForm.extras && Object.entries(questForm.extras).map(([key, value]) =>
+                        <label key={key}>
+                            {key}:
+                            <input name={key} value={value} onChange={handleChange}></input>
+                        </label>)}
+                    </div>
+
                         Game: <br />
                         <input name='gameId' value={questForm.gameId} type='radio' disabled={true} checked={true}/>
                         {editQuest.gameName}
@@ -146,19 +185,28 @@ function EditQuest() {
                     <label>
                         Versions:
                         <ul>
-                            {versions.map(v => (
+                            {versions.map(v => {
+                                const vExtras = Array.isArray(v.extras) ? [...v.extras].slice().sort() : [];
+                                const questExtras = editQuest.extras ? Object.keys(editQuest.extras).slice().sort() : []
+                                return (
                                 <li key={v.id}>
-                                    <label>
-                                        <input name='versions' type='checkbox' value={v.id} onChange={handleChecked} checked={questForm.versions.includes(v.id)} />
+                                    <label key={v.name}>
+                                        <input name='versions' type='checkbox' value={v.id} onChange={handleChange} checked={questForm.versions.includes(v.id)}
+                                            disabled={initialVersions.includes(v.id) || JSON.stringify(vExtras) !== JSON.stringify(questExtras)
+                                            }
+                                        />
                                         {v.name}
                                     </label>
                                 </li>
-                            ))}
+                                );
+                            })}
                         </ul>
                     </label><br />
                     <p>Title: {questForm.title}<br />Description: {questForm.description}<br />Location {questForm.location}<br />
                     Requirements {questForm.requirement}<br />Missable {questForm.missable}<br />
-                    Hint {questForm.hint}<br />Game: {questForm.gameId}<br />Platforms:{questForm.platforms}<br /> Quest Id: {editQuest.id}</p>
+                    Hint {questForm.hint}<br />Game: {questForm.gameId}<br /><br /> Quest Id: {editQuest.id}</p>
+                    <br />Extras: {questForm.extras && Object.entries(questForm.extras).map(([key, value]) => <p>{key}: {value}</p>)}
+
                     <button type='submit'>Save Changes</button>
                     <button type='button'><Link to={`/games/${editQuest.game_id}/quests`}>Return</Link></button>
 

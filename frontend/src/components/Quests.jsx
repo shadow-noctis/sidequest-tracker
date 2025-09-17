@@ -156,6 +156,11 @@ function QuestList() {
               <li>Location: {quest.location}</li>
               <li>Requirements: {quest.requirement}</li>
               <li>Missable: {quest.missable ? ' ✓' : ' ✗'}</li>
+              {quest.extras && Object.entries(quest.extras).map(([key, value]) =>
+              <li key={key}>
+                {key}: {value}
+              </li>
+              )}
               <li>Completed: {quest.completed ? ' ✓' : ' ✗'}</li>
               {user?.role === 'admin' && (<li><Link to={`/quests/${quest.id}`}>Edit</Link></li>)}
               {user?.role === 'admin' && (<li><button onClick={() => handleDeleteClick(quest)}>Delete</button></li>)}

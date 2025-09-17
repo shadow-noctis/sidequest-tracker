@@ -232,7 +232,6 @@ app.get('/api/platforms/:gameId/quests', (req, res) => {
       LEFT JOIN game_platform gp ON p.id = gp.platform_id
       WHERE gp.game_id = ?
       `).all(gameId)
-      console.log(platforms)
       res.json(platforms);
   } catch (err) {
     console.error('Error fetching platforms:', err);
@@ -265,7 +264,8 @@ app.get('/api/quests', (req, res) => {
              ON q.id = uq.quest_id AND uq.user_id = ?
     `).all(userId).map(q => ({ ...q, completed: !!q.completed })); // convert to Boolean
 
-    res.json(quests);
+    const parsedQuests = quests.map(q => ({...q, extras: JSON.parse(q.extras)}))
+    res.json(parsedQuests);
   } catch (err) {
     console.error('Error fetching quests:', err);
     res.status(500).json({ error: err.message });
@@ -307,8 +307,7 @@ app.get('/api/games/:gameId/quests', (req, res) => {
             WHERE q.game_id = ?
             GROUP BY q.id
         `).all(userId, userId, gameId)
-        const parsedQuests = quests.map(quest => ({ ...quest, versions: JSON.parse(quest.versions), completed: !!quest.completed}));
-        console.log(parsedQuests)
+        const parsedQuests = quests.map(quest => ({ ...quest, versions: JSON.parse(quest.versions), extras: JSON.parse(quest.extras), completed: !!quest.completed}));
         res.json(parsedQuests);
   } catch (err) {
     console.error('Error fetching quests:', err);
@@ -336,7 +335,7 @@ app.get('/api/quests/:questId', (req, res) => {
       GROUP BY q.id
       `).get(questId)
 
-    res.json({...quest, versions : JSON.parse(quest.versions)});
+    res.json({...quest, versions : JSON.parse(quest.versions), extras : quest.extras ? JSON.parse(quest.extras) : []});
   } catch (err) {
     console.error('Error fetching quest', err);
     res.status(500).json({ error: err.message })
@@ -355,7 +354,7 @@ app.get('/api/achievements', (req, res) => {
 
 // Add quest
 app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
-  const { title, description, requirement, location, missable, gameId, hint, versions } = req.body;
+  const { title, description, requirement, location, missable, gameId, hint, versions, extras } = req.body;
 
   if (!versions || versions.length === 0) {
     return res.status(400).json({ error: "At least one platform must be selected." });
@@ -363,10 +362,10 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
   try {
 
       const questStmt = db.prepare(`
-          INSERT INTO quests (game_id, title, description, requirement, location, missable, hint)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO quests (game_id, title, description, requirement, location, missable, hint, extras)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `);
-          const quest = questStmt.run(gameId, title, description, requirement, location, missable, hint);
+          const quest = questStmt.run(gameId, title, description, requirement, location, missable, hint, extras);
 
 
       const qpStmt = db.prepare(`
@@ -386,7 +385,7 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
 // Update quest
 app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params;
-  let { title, description, requirement, location, missable, hint, gameId, versions } = req.body
+  let { title, description, requirement, location, missable, hint, gameId, versions, extras } = req.body
 
   try {
 
@@ -406,10 +405,10 @@ app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) =
     
     const updateStmt = db.prepare(`
       UPDATE quests
-      SET title = ?, description = ?, requirement = ?, location = ?, missable = ?, hint = ?, game_id = ?
+      SET title = ?, description = ?, requirement = ?, location = ?, missable = ?, hint = ?, game_id = ?, extras = ?
       WHERE id = ?
       `);
-      const info = updateStmt.run(title, description, requirement, location, missable, hint, gameId, id)
+      const info = updateStmt.run(title, description, requirement, location, missable, hint, gameId, extras, id)
       if (info.changes === 0) return res. status(404).json({error: 'Quest not found'});
       res.json({ message: `Quest ${id} ${info.title} updated successfully` });
   } catch (err) {
@@ -520,7 +519,6 @@ app.delete('/api/games/:id', authenticateToken, requireRole('admin'), (req, res)
 
     const count = db.prepare(`SELECT COUNT(*) as questCount FROM quests WHERE game_id = ?`).get(id)
     if (count.questCount > 0 && !force) {
-      console.log(count.questCount)
       return res.status(409).json({ requireConfirmation: true, questCount: count.questCount})
     }
 
@@ -560,7 +558,6 @@ app.delete('/api/versions/:id', authenticateToken, requireRole('admin'), (req, r
       FROM quests q
       LEFT JOIN quest_version qv ON q.id = qv.quest_id
       WHERE qv.version_id = ?`).get(id);
-    console.log(quests.questCount);
     if (quests.questCount > 0 && !force) {
       return res.status(409).json({ requireConfirmation: true, questCount: quests.questCount})
     }
@@ -626,7 +623,6 @@ app.post('/api/register', async (req, res) => {
 // Login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  console.log(username)
   const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
   if (!user) {

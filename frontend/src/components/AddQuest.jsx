@@ -38,7 +38,9 @@ function AddQuest() {
                         "Content-type": "application/json",
                         'Authorization': `Bearer ${token}`,
                     },
-                    body: JSON.stringify(questForm),
+                    body: JSON.stringify({
+                        ...questForm,
+                        extras: JSON.stringify(questForm.extras)}),
                 });
             
             if (!res.ok) {
@@ -119,6 +121,7 @@ function AddQuest() {
         })
     }, [])
 
+    // Get versions
     useEffect(() => {
         fetch(`http://localhost:3001/api/versions/${gameId}`)
         .then(res => res.json())
