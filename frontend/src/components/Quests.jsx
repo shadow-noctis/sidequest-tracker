@@ -11,6 +11,9 @@ function QuestList() {
   const [gameName, setGameName] = useState(location.state?.gameName);
   // Selected quest if delete, edit etc.
   const [selectedQuest, setSelectedQuest] = useState(null);
+  
+  const [hintsVisible, setHintsVisible] = useState({});
+  const [expandedQuests, setExpandedQuests] = useState({});
 
   // Versions related to game and currently selected platform to show
   const [versions, setVersions] = useState([]);
@@ -23,8 +26,36 @@ function QuestList() {
   const navigate = useNavigate();
   const hasShown = useRef(false)
 
-  const { user } = useContext(AuthContext)
+  const { user } = useContext(AuthContext);
   const token = localStorage.getItem('token');
+
+  
+  
+  // Expand or collapse quest info:
+  const toggleQuest = (id) => {
+    setExpandedQuests((prev) => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const expandAll = () => {
+    const allExpanded = {};
+    quests.forEach((q) => (allExpanded[q.id] = true));
+    setExpandedQuests(allExpanded);
+  }
+
+  const collapseAll = () => {
+    setExpandedQuests({});
+  };
+
+  // Show or hide hint
+  const toggleHint = (id) => {
+    setHintsVisible(prev => ({ 
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
 
   // Handle when delete clicked (confirm with Modal)
   const handleDeleteClick = (quest) => {
@@ -145,31 +176,48 @@ function QuestList() {
       <h2>{gameName}</h2>
       {versions.map(v => (
         <button key={v.id} name={v.id} value={v.name} onClick={handleClick}>{v.name}</button>
-      ))}
+      ))}<br />
+      <button onClick={expandAll}>Expand All</button>
+      <button onClick={collapseAll}>Collapse All</button>
       <ul>
         {quests.filter(q => q.versions.some(v => v.name === selectedVersion))
         .map(quest => (
           <li key={quest.id}>
-            <strong>{quest.title}</strong>
-            <ul>
-              <li>Description: {quest.description}</li>
-              <li>Location: {quest.location}</li>
-              <li>Requirements: {quest.requirement}</li>
-              <li>Missable: {quest.missable ? ' ✓' : ' ✗'}</li>
-              {quest.extras && Object.entries(quest.extras).map(([key, value]) =>
-              <li key={key}>
-                {key}: {value}
-              </li>
-              )}
-              <li>Completed: {quest.completed ? ' ✓' : ' ✗'}</li>
-              {user?.role === 'admin' && (<li><Link to={`/quests/${quest.id}`}>Edit</Link></li>)}
-              {user?.role === 'admin' && (<li><button onClick={() => handleDeleteClick(quest)}>Delete</button></li>)}
-                <li>
-                  <button onClick={() => completeQuest(quest.id, quest.completed)}>
-                    {quest.completed ? 'Mark as Not Completed' : 'Mark as Completed'}
-                  </button>
+            <div onClick={() => toggleQuest(quest.id)} style={{ cursor: "pointer" }}>
+              <strong>{quest.title}</strong> {expandedQuests[quest.id] ? "▲" : "▼"}
+            </div>
+
+            {expandedQuests[quest.id] && (
+              <ul>
+                <li>Description: {quest.description}</li>
+                <li>Location: {quest.location}</li>
+                <li>Requirements: {quest.requirement}</li>
+                <li>Missable: {quest.missable ? ' ✓' : ' ✗'}</li>
+                {quest.extras && Object.entries(quest.extras).map(([key, value]) =>
+                <li key={key}>
+                  {key}: {value}
                 </li>
-            </ul>
+                )}
+                {quest.hint && (
+                  <li>Hint: {hintsVisible[quest.id] ? (
+                    <>{quest.hint}
+                    <button onClick={() => toggleHint(quest.id)}>Hide Hint</button>
+                    </>
+                  ) : (
+                    <button onClick={() => toggleHint(quest.id)}>Show Hint</button>
+                  )}
+                  </li>
+                )}
+                <li>Completed: {quest.completed ? ' ✓' : ' ✗'}</li>
+                {user?.role === 'admin' && (<li><Link to={`/quests/${quest.id}`}>Edit</Link></li>)}
+                {user?.role === 'admin' && (<li><button onClick={() => handleDeleteClick(quest)}>Delete</button></li>)}
+                  <li>
+                    <button onClick={() => completeQuest(quest.id, quest.completed)}>
+                      {quest.completed ? 'Mark as Not Completed' : 'Mark as Completed'}
+                    </button>
+                  </li>
+              </ul>
+            )}
           </li>
         ))}
       </ul>

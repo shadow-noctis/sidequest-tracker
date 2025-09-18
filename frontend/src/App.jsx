@@ -12,7 +12,8 @@ import LogoutButton from './components/Logout';
 import GamesList from './components/Games'
 import EditQuest from './components/EditQuest'
 import AddGamePlatform from './components/AddGamePlatform';
-import EditGame from './components/EditGame'
+import GameSetup from './components/GameSetup';
+import EditGame from './components/EditGame';
 
 export default function App() {
 
@@ -34,7 +35,7 @@ export default function App() {
             <li><NavLink to='/'>Home</NavLink></li>
             <li><NavLink to="/games">Quests</NavLink></li>
             {user?.role === 'admin' && (<li><NavLink to="/add">Add Quest</NavLink></li>)}
-            {user?.role === 'admin' && (<li><NavLink to="/game-platform">Games & Platforms</NavLink></li>)}
+            {user?.role === 'admin' && (<li><NavLink to="/game-setup">Game Setup</NavLink></li>)}
             {!user ? (
             <>
               <li><NavLink to='/login'>Login</NavLink></li>
@@ -54,7 +55,7 @@ export default function App() {
               <Route path="add" element={<AddQuest />} />
               <Route path='register' element={<Register />} />
               <Route path='login' element={<Login />} />
-              <Route path='game-platform' element={<AddGamePlatform />} />
+              <Route path='game-setup' element={<GameSetup />} />
             </Routes>
           </div>
         </div>
