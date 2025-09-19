@@ -26,6 +26,7 @@ const db = new Database('./data/quest_tracker.db');
 
 // Initialize tables if they don't exist
 db.exec(`
+
   CREATE TABLE IF NOT EXISTS games (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE
@@ -64,11 +65,10 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT,
-    unlocked BOOLEAN DEFAULT 0,
+    warning TEXT,
+    requires TEXT NOT NULL,
     game_id INTEGER,
-    platform_id INTEGER,
-    FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
-    FOREIGN KEY (platform_id) REFERENCES platforms(id) ON DELETE CASCADE
+    FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS users (
@@ -103,13 +103,23 @@ db.exec(`
     FOREIGN KEY (platform_id) REFERENCES platforms(id) ON DELETE CASCADE
   );
 
-  CREATE TABLE IF NOT EXISTS quest_platform (
-    quest_id INTEGER,
+  CREATE TABLE IF NOT EXISTS achievement_platform (
+    achievement_id INTEGER,
     platform_id INTEGER,
-    PRIMARY KEY (quest_id, platform_id),
-    FOREIGN KEY (quest_id) REFERENCES quests(id) ON DELETE CASCADE,
+    PRIMARY KEY (achievement_id, platform_id),
+    FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE,
     FOREIGN KEY (platform_id) REFERENCES platforms(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS user_achievement (
+    user_id INTEGER,
+    achievement_id INTEGER,
+    achieved INTEGER DEFAULT 0,
+    PRIMARY KEY (user_id, achievement_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
+);
+
 `);
 
 //Create admin
@@ -371,12 +381,41 @@ app.get('/api/achievements', (req, res) => {
   }
 });
 
+// Add achievement
+app.post('/api/achievements', authenticateToken, requireRole('admin'), (req, res) => {
+  const { name, requires, description, warning, gameId, platforms } = req.body;
+
+  if (!platforms || platforms.length === 0) {
+    return res.status(400).json({ error: "At least one platform must be selected." });
+    }
+
+  try{
+    const achievementStmt = db.prepare(`
+      INSERT INTO achievements (name, requires, description, warning, game_id)
+      VALUES (?, ?, ?, ?, ?)
+      `);
+    const achievement = achievementStmt.run(name, requires, description, warning, gameId);
+
+    const apStmt = db.prepare(`
+      INSERT INTO achievement_platform (achievement_id, platform_id)
+      VALUES (?, ?)
+      `);
+      platforms.forEach(pid => apStmt.run(achievement.lastInsertRowid, pid))
+
+      res.status(201).json({ id: achievement.lastInsertRowid, message: 'Achievement added succesfully '})
+
+  } catch (err) {
+    console.error('Error adding achievement: ', err);
+    res.status(500).json({ error: err.message})
+  }
+});
+
 // Add quest
 app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
   const { title, description, requirement, location, missable, gameId, hint, versions, extras } = req.body;
 
   if (!versions || versions.length === 0) {
-    return res.status(400).json({ error: "At least one platform must be selected." });
+    return res.status(400).json({ error: "At least one version must be selected." });
   }
   try {
 
@@ -384,7 +423,7 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
           INSERT INTO quests (game_id, title, description, requirement, location, missable, hint, extras)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `);
-          const quest = questStmt.run(gameId, title, description, requirement, location, missable, hint, extras);
+      const quest = questStmt.run(gameId, title, description, requirement, location, missable, hint, extras);
 
 
       const qpStmt = db.prepare(`

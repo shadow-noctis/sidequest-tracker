@@ -64,7 +64,7 @@ function EditVersion() {
             });
             if (!res.ok) {
                 throw new Error("Failed to update game")}
-                navigate(`/game-setup`, { state: {toastMessage: 'Version updated!'}});
+                navigate(`/game-setup`, { state: {toastMessage: 'Version updated!', openSection: 'versions' }});
         } catch (err) {
             console.error("Error updating game:", err);
         }
@@ -147,7 +147,7 @@ function EditVersion() {
                     GameId: {versionForm.gameId}<br /> Extras: {versionForm.extras}
                     </p>
                     <button type='submit'>Save Changes</button>
-                    <button type='button'><Link to={`/game-setup`}>Return</Link></button>
+                    <button type='button'><Link to={`/game-setup`} state={{ openSection: 'versions'}}>Return</Link></button>
 
                 </form>
             </div>

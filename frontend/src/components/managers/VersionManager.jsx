@@ -184,15 +184,6 @@ const deleteVersion = async (ver) => {
         fetchVersions();
     }, []);
 
-    // Show toast when returning from successful add/edit/delete
-    useEffect(() => {
-        if (location.state?.toastMessage && !hasShown.current) {
-            toast(location.state.toastMessage);
-            hasShown.current = true;
-            navigate(location.pathname, {replace: true})
-        }
-    }, [location, navigate]);
-
     return(
         <div id='version_add'>
             <h2>Versions</h2>
