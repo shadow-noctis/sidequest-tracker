@@ -209,6 +209,25 @@ app.get('/api/versions/:gameId', (req, res) => {
     }
   });
 
+  // Get specific version
+  app.get('/api/versions/:versionId/ver', (req, res) => {
+    const versionId = req.params.versionId
+
+    try {
+      const version = db.prepare(`
+        SELECT v.*,
+        g.name as gameName
+        FROM versions v
+        LEFT JOIN games g ON g.id = v.game_id
+        WHERE v.id = ?
+        `).get(versionId)
+        res.json({...version, extras: JSON.parse(version.extras)})
+    } catch (err) {
+      console.error("Failed to fetch version: ", err)
+      res.status(500).json({ error: err.message})
+    }
+  });
+
 // Get all platforms
 app.get('/api/platforms', (req, res) => {
   try {
@@ -569,7 +588,27 @@ app.delete('/api/versions/:id', authenticateToken, requireRole('admin'), (req, r
     res.status(500).json({ error: err.message})
     console.error(err)
   }
-})
+});
+
+// Update version
+app.put('/api/versions/:id', authenticateToken, requireRole('admin'), (req, res) => {
+  const { id } = req.params
+  const { name, developer, year, gameId, extras } = req.body;
+  console.log("name: ", name, "dev: ", developer, "year: ", year, "gameId: ", gameId, "extras: ", extras)
+  try{
+
+    const updateStmt = db.prepare(`
+      UPDATE versions
+      SET name = ?, publisher = ?, release_date = ?, game_id = ?, extras = ?
+      WHERE id = ?`).run(name, developer, year, gameId, extras, id)
+
+    res.json({ message: `Game ${id} updated successfully`})
+  } catch (err) {
+    console.error("Error updating game", err)
+    res.status(500).json({ error: err.message })
+  }
+});
+
 
 // Add platform
 app.post('/api/platforms', authenticateToken, requireRole('admin'), (req, res) => {

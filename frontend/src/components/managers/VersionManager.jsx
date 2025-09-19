@@ -207,6 +207,7 @@ const deleteVersion = async (ver) => {
                             <li key={v.id}>
                                 {v.name}
                                 {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(v, 'version')}>Delete</button>)}
+                                {user?.role === 'admin' && (<Link to={`/versions/${v.id}`}>Edit</Link>)}
                             </li>
                         ))}
                     </ul>

@@ -12,8 +12,6 @@ function EditGame() {
     const navigate = useNavigate();
     const [gameForm, setGameForm] = useState({
         name: "",
-        publisher: "",
-        year: "",
         platforms: []
     });
 
@@ -24,19 +22,18 @@ function EditGame() {
             .then((data) => {
                 setEditGame(data);
                 setGameForm({
-                    name: data.name,
-                    publisher: data.publisher,
                     id: data.id,
+                    name: data.name,
                     platforms: data.platforms.map(p => p.id)
                 });
             });
     }, [gameId]);
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
+        const { name, value } = e.target;
         setGameForm((prev) =>({
             ...prev,
-            [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+            [name]: value,
         }));
     };
 
@@ -71,7 +68,7 @@ function EditGame() {
                 body: JSON.stringify(gameForm),
             });
             if (!res.ok) throw new Error("Failed to update game")
-                navigate(`/game-platform`, { state: {toastMessage: 'Game updated!'}});
+                navigate(`/game-setup`, { state: {toastMessage: 'Game updated!'}});
         } catch (err) {
             console.error("Error updating game:", err);
         }
@@ -92,20 +89,12 @@ function EditGame() {
             <div>
                 <h2>Edit Game:</h2>
                 <h3>{editGame.name}</h3>
-                <ul>
-                    <li>Name: {editGame.name}</li>
-                    <li>Publisher: {editGame.publisher}</li>
-                </ul>
             </div>
             <div>
                 <form onSubmit={handleSubmit}>
                     <label>
                         Name:
                         <input name="name" value={gameForm.name} onChange={handleChange} />
-                    </label>
-                    <label>
-                        Publisher:
-                        <input name="publisher" value={gameForm.publisher} onChange={handleChange} />
                     </label>
                     <label>
                         Platforms:
@@ -119,9 +108,9 @@ function EditGame() {
                             ))}
                         </ul>
                     </label>
-                    <p>Name: {gameForm.name}<br />Publisher: {gameForm.publisher}<br />Platforms:{gameForm.platforms}</p>
+                    <p>Name: {gameForm.name}<br />Platforms:{gameForm.platforms}</p>
                     <button type='submit'>Save Changes</button>
-                    <button type='button'><Link to={`/game-platform`}>Return</Link></button>
+                    <button type='button'><Link to={`/game-setup`}>Return</Link></button>
 
                 </form>
             </div>

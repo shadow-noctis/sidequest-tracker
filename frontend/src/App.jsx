@@ -11,9 +11,9 @@ import Login from './components/Login'
 import LogoutButton from './components/Logout';
 import GamesList from './components/Games'
 import EditQuest from './components/EditQuest'
-import AddGamePlatform from './components/AddGamePlatform';
 import GameSetup from './components/GameSetup';
 import EditGame from './components/EditGame';
+import EditVersion from './components/EditVersion';
 
 export default function App() {
 
@@ -52,6 +52,7 @@ export default function App() {
               <Route path="games/:gameId/quests" element={<QuestList />} />
               <Route path="quests/:questId" element={<EditQuest />} />
               <Route path="games/:gameId" element={<EditGame />} />
+              <Route path="versions/:versionId" element={<EditVersion />} />
               <Route path="add" element={<AddQuest />} />
               <Route path='register' element={<Register />} />
               <Route path='login' element={<Login />} />
