@@ -8,6 +8,7 @@ const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken');
 const { release } = require('os');
 const { json } = require('stream/consumers');
+const { parse } = require('path');
 const jwtSecret = process.env.JWT_SECRET;
 
 const app = express();
@@ -249,14 +250,13 @@ app.get('/api/platforms', (req, res) => {
   }
 });
 
-// Get platforms related to specific quest
-app.get('/api/platforms/:gameId/quests', (req, res) => {
+// Get platforms related to specific achievement
+app.get('/api/platforms/:gameId', (req, res) => {
   const gameId = req.params.gameId
 
   try {
     const platforms = db.prepare(`
-      SELECT p.id,
-      p.name
+      SELECT p.*
       FROM platforms p
       LEFT JOIN game_platform gp ON p.id = gp.platform_id
       WHERE gp.game_id = ?
@@ -381,6 +381,51 @@ app.get('/api/achievements', (req, res) => {
   }
 });
 
+app.get('/api/games/:gameId/achievements', (req, res) => {
+  let userId = null;
+  const gameId = req.params.gameId;
+
+  // User:
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded =jwt.verify(token, jwtSecret);
+      userId = decoded.id
+    } catch (err) {
+
+    }
+  };
+
+  // Achievements:
+  try {
+    const achievements = db.prepare(`
+    SELECT a.*,
+    CASE 
+      WHEN ? IS NULL THEN 0
+      ELSE IFNULL(ua.achieved, 0)
+    END AS completed,
+    json_group_array(
+      json_object('id', p.id, 'name', p.name)
+      ) as platforms
+    FROM achievements a
+    LEFT JOIN achievement_platform ap ON a.id = ap.achievement_id
+    LEFT JOIN platforms p ON ap.platform_id = p.id
+    LEFT JOIN user_achievement ua
+          ON a.id = ua.achievement_id AND ua.user_id = ?
+    WHERE a.game_id = ?
+    GROUP BY a.id
+      `).all(userId, userId, gameId);
+      const parsedAchievements = achievements.map(achievement => ({
+        ...achievement, platforms: JSON.parse(achievement.platforms), achieved: !!achievement.achieved 
+      }));
+      res.json(parsedAchievements);
+  } catch (err) {
+    console.error('Error fetching achievements: ', err);
+    res.status(500).json({ error: err.message })
+  }
+});
+
 // Add achievement
 app.post('/api/achievements', authenticateToken, requireRole('admin'), (req, res) => {
   const { name, requires, description, warning, gameId, platforms } = req.body;
@@ -409,6 +454,40 @@ app.post('/api/achievements', authenticateToken, requireRole('admin'), (req, res
     res.status(500).json({ error: err.message})
   }
 });
+
+
+app.post('/api/achievements/:id/achieved', authenticateToken, (req, res) => {
+  const achievementId = req.params.id;
+  const userId = req.user.id;
+  const achieved = req.body.completed ? 1 : 0;
+
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO user_achievement (user_id, achievement_id, achieved)
+      VALUES (?, ?, ?)
+      ON CONFLICT(user_id, achievement_id) DO UPDATE SET achieved = ?
+    `);
+    stmt.run(userId, achievementId, achieved, achieved);
+
+    res.json({ message: `Achievement marked as ${achieved ? 'achieved' : 'not achieved'}` });
+  } catch (err) {
+    console.error('Error updating achievement:', err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/user/quests', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const stmt = db.prepare(`
+        SELECT q.*, uq.completed
+        FROM quests q
+        LEFT JOIN user_quests uq
+        ON q.id = uq.quest_id AND uq.user_id = ?
+    `);
+    const quests = stmt.all(userId);
+    res.json(quests);
+});
+
 
 // Add quest
 app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {

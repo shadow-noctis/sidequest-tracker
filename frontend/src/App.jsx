@@ -10,10 +10,12 @@ import Register from './components/Register'
 import Login from './components/Login'
 import LogoutButton from './components/Logout';
 import GamesList from './components/Games'
-import EditQuest from './components/EditQuest'
+import EditQuest from './components/edit/EditQuest'
 import GameSetup from './components/GameSetup';
-import EditGame from './components/EditGame';
-import EditVersion from './components/EditVersion';
+import EditGame from './components/edit/EditGame';
+import EditVersion from './components/edit/EditVersion';
+import GamesAchievement from './components/GamesAchievement';
+import AchievementsList from './components/Achievements';
 
 export default function App() {
 
@@ -33,7 +35,8 @@ export default function App() {
         <div>
           <ul className="header">
             <li><NavLink to='/'>Home</NavLink></li>
-            <li><NavLink to="/games">Quests</NavLink></li>
+            <li><NavLink to="/games(quest)">Quests</NavLink></li>
+            <li><NavLink to="/games(achievement)">Achievements</NavLink></li>
             {user?.role === 'admin' && (<li><NavLink to="/add">Add Quest</NavLink></li>)}
             {user?.role === 'admin' && (<li><NavLink to="/game-setup">Game Setup</NavLink></li>)}
             {!user ? (
@@ -48,8 +51,10 @@ export default function App() {
           <div className="content">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="games" element={<GamesList />} />
+              <Route path="games(quest)" element={<GamesList />} />
+              <Route path="games(achievement)" element={<GamesAchievement />} />
               <Route path="games/:gameId/quests" element={<QuestList />} />
+              <Route path="games/:gameId/achievements" element={<AchievementsList />} />
               <Route path="quests/:questId" element={<EditQuest />} />
               <Route path="games/:gameId" element={<EditGame />} />
               <Route path="versions/:versionId" element={<EditVersion />} />
