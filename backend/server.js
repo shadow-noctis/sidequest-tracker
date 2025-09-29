@@ -381,6 +381,7 @@ app.get('/api/achievements', (req, res) => {
   }
 });
 
+// Get achievements (specific game)
 app.get('/api/games/:gameId/achievements', (req, res) => {
   let userId = null;
   const gameId = req.params.gameId;
@@ -404,7 +405,7 @@ app.get('/api/games/:gameId/achievements', (req, res) => {
     CASE 
       WHEN ? IS NULL THEN 0
       ELSE IFNULL(ua.achieved, 0)
-    END AS completed,
+    END AS achieved,
     json_group_array(
       json_object('id', p.id, 'name', p.name)
       ) as platforms
@@ -459,7 +460,7 @@ app.post('/api/achievements', authenticateToken, requireRole('admin'), (req, res
 app.post('/api/achievements/:id/achieved', authenticateToken, (req, res) => {
   const achievementId = req.params.id;
   const userId = req.user.id;
-  const achieved = req.body.completed ? 1 : 0;
+  const achieved = req.body.achieved ? 1 : 0;
 
   try {
     const stmt = db.prepare(`

@@ -182,7 +182,7 @@ function AchievementsList() {
           </li>
         ))}
       </ul>
-      <Link to={'/games'}><button>Games List</button></Link>
+      <Link to={'/games(achievement)'}><button>Games List</button></Link>
 
       {showModal && (
         <DeleteModal
