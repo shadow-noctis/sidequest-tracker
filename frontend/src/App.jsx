@@ -14,6 +14,7 @@ import EditQuest from './components/edit/EditQuest'
 import GameSetup from './components/GameSetup';
 import EditGame from './components/edit/EditGame';
 import EditVersion from './components/edit/EditVersion';
+import EditAchievement from './components/edit/EditAchievements';
 import GamesAchievement from './components/GamesAchievement';
 import AchievementsList from './components/Achievements';
 
@@ -57,6 +58,7 @@ export default function App() {
               <Route path="games/:gameId/achievements" element={<AchievementsList />} />
               <Route path="quests/:questId" element={<EditQuest />} />
               <Route path="games/:gameId" element={<EditGame />} />
+              <Route path="achievements/:achievementId" element={<EditAchievement />} />
               <Route path="versions/:versionId" element={<EditVersion />} />
               <Route path="add" element={<AddQuest />} />
               <Route path='register' element={<Register />} />

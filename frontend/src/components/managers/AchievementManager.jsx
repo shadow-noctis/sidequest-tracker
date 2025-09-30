@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../AuthContext';
 import DeleteModal from '../DeleteModal'
 import ConfirmModal from '../ConfirmModal'
+import EditAchievement from '../edit/EditAchievements';
 
 function AchievementManager() {
 
@@ -144,7 +145,10 @@ function AchievementManager() {
             <h4>Existing Achievements</h4>
             <ul>
                 {achievements.map(a => (
-                        <li key={a.id}>{a.name}</li>
+                        <li
+                            key={a.id}>{a.name}
+                            {user?.role === 'admin' && (<Link to={`/achievements/${a.id}`}>Edit</Link>)}
+                        </li>
                 ))}
             </ul>
             <div>

@@ -123,6 +123,8 @@ db.exec(`
 
 `);
 
+console.log("=== Backend code running ===")
+
 //Create admin
 function createAdmin() {
   const username = process.env.ADMIN_USERNAME
@@ -398,6 +400,56 @@ app.get('/api/games/:gameId/achievements', (req, res) => {
     }
   };
 
+  //Get specific achievement
+app.get('/api/achievements/:id', (req, res) => {
+  const { achievementId } = req.params;
+  console.log("id:", achievementId)
+  
+  try{
+    const achievement = db.prepare(`
+      SELECT a.*,
+      json_group_array(
+        json_object('id', p.id, 'name', p.name)
+      ) as platforms
+      FROM achievements a
+      LEFT JOIN achievement_platform ap ON a.id = ap.achievement_id
+      LEFT JOIN platforms p ON ap.platform_id = p.id
+      WHERE a.id = ?
+      GROUP BY a.id
+      `).get(achievementId)
+
+      res.json({...achievement, platforms : JSON.parse(achievement.platforms)});
+  } catch(err) {
+    console.error('Error fetching achievement', err)
+    res.status(500).json({ error: err.message})
+  }
+});
+
+app.get('/api/achievements/:achievementId', (req, res) => {
+  const { achievementId } = req.params;
+  console.log("id:", achievementId);
+  
+  try {
+    const achievement = db.prepare(`
+      SELECT a.*,
+      json_group_array(
+        json_object('id', p.id, 'name', p.name)
+      ) as platforms
+      FROM achievements a
+      LEFT JOIN achievement_platform ap ON a.id = ap.achievement_id
+      LEFT JOIN platforms p ON ap.platform_id = p.id
+      WHERE a.id = ?
+      GROUP BY a.id
+    `).get(achievementId);
+
+    res.json({ ...achievement, platforms: JSON.parse(achievement.platforms) });
+  } catch (err) {
+    console.error('Error fetching achievement', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
   // Achievements:
   try {
     const achievements = db.prepare(`
@@ -457,7 +509,7 @@ app.post('/api/achievements', authenticateToken, requireRole('admin'), (req, res
 });
 
 
-app.post('/api/achievements/:id/achieved', authenticateToken, (req, res) => {
+app.post('/api/achievement/:id/achieved', authenticateToken, (req, res) => {
   const achievementId = req.params.id;
   const userId = req.user.id;
   const achieved = req.body.achieved ? 1 : 0;
@@ -474,6 +526,32 @@ app.post('/api/achievements/:id/achieved', authenticateToken, (req, res) => {
   } catch (err) {
     console.error('Error updating achievement:', err);
     res.status(400).json({ error: err.message });
+  }
+});
+
+//Update Achievement
+app.put('/api/achievement/:id', authenticateToken, requireRole('admin'), (req, res) => {
+  const { id } = req.params
+  const { name, requires, description, warning, gameId, platforms } = req.body;
+  try{
+    //Delete all connections of the game from game_platform table
+    const platformDelStmt = db.prepare(`DELETE FROM achievement_platform WHERE game_id = ?`).run(id);
+
+    const platformInsertStmt = db.prepare(`
+      INSERT INTO achievement_platform (achievement_id, platform_id)
+      VALUES (?, ?)
+      `);
+      platforms.forEach(pid => platformInsertStmt.run(id, pid));
+
+    const updateStmt = db.prepare(`
+      UPDATE achievements
+      SET name = ?, requires = ?, description = ?, warning = ?, game_id = ?
+      WHERE id = ?`).run(name, requires, description, warning, gameId, id)
+
+    res.json({ message: `Achievement ${id} updated successfully`})
+  } catch (err) {
+    console.error("Error updating game", err)
+    res.status(500).json({ error: err.message })
   }
 });
 
