@@ -15,10 +15,6 @@ function Home() {
         }
     }, [location, navigate]);
 
-    useEffect(() => {
-        fetch('http://localhost:3001/api/dummytest')
-    }, [])
-
     return (
         <div>
             <h1>Side Quest Tracker</h1>
