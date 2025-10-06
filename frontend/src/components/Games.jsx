@@ -19,13 +19,6 @@ function GamesList() {
         })
     }, []);
 
-<<<<<<< HEAD
-=======
-    useEffect(() => {
-        fetch('http://localhost:3001/api/test')
-        }, [])
-
->>>>>>> b241dd9 (Continue work after fixing git corruption)
     if (loading) return <p>Loading games</p>;
 
     return (
