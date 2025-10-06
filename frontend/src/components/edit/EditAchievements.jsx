@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom'
 
 function EditAchievement() {
     const token = localStorage.getItem('token');
+    const [achievement, setAchievement] = useState(null);
 
     const [platforms, setPlatforms] = useState([])
 
-    const [achievement, setAchievement] = useState(null);
     const { achievementId } = useParams();
     const navigate = useNavigate();
     const [achievementForm, setAchievementForm] = useState({
@@ -21,11 +21,12 @@ function EditAchievement() {
 
     useEffect(() => {
         fetchPlatforms()
+        console.log("AchievementId: ", achievementId)
         fetch(`http://localhost:3001/api/achievements/${achievementId}`)
             .then((res) => res.json())
             .then((data) => {
                 setAchievement(data);
-                console.log(data)
+                console.log("Achievements: ", data)
                 setAchievementForm({
                     id: data.id,
                     name: data.name,
@@ -87,7 +88,7 @@ function EditAchievement() {
         .then(res => res.json())
         .then(data => {
             setPlatforms(data)
-            console.log(data)
+            console.log("Platforms :", data)
         });
     };
 

@@ -31,3 +31,6 @@ dist-ssr
 .env.production.local
 
 backend/data
+
+# For Debugging.
+old_server.js
