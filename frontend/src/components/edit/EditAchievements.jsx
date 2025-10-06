@@ -74,7 +74,7 @@ function EditAchievement() {
                     "Content-Type": "application/json",
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(gameForm),
+                body: JSON.stringify(achievementForm),
             });
             if (!res.ok) throw new Error("Failed to update game")
                 navigate(`/game-setup`, { state: {toastMessage: 'Achievement updated!', openSection: 'achievements' }});

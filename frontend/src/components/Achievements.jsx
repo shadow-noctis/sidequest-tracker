@@ -63,8 +63,8 @@ function AchievementsList() {
       setSelectedPlatform(value);    
     }
   
-  // Mark as completed
-  async function completeQuest(achievementId, currentAchieved) {
+  // Mark as achieved
+  async function completeAchievement(achievementId, currentAchieved) {
     try {
       const res = await fetch(`http://localhost:3001/api/achievements/${achievementId}/achieved`, {
         method: 'POST',
@@ -173,7 +173,7 @@ function AchievementsList() {
                 )}
                 <li>Achieved: {a.achieved ? ' ✓' : ' ✗'}</li>
                   <li>
-                    <button onClick={() => completeQuest(a.id, a.achieved)}>
+                    <button onClick={() => completeAchievement(a.id, a.achieved)}>
                       {a.achieved ? 'Mark undone' : 'Mark as Achieved'}
                     </button>
                   </li>

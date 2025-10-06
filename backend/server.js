@@ -149,7 +149,6 @@ createAdmin();
 
 // ROUTES
 
-
 // Get all games
 app.get('/api/games', (req, res) => {
   try {
@@ -269,7 +268,6 @@ app.get('/api/platforms/:gameId', (req, res) => {
   }
 });
 
-
 // Get all quests
 app.get('/api/quests', (req, res) => {
   let userId = null;
@@ -302,19 +300,22 @@ app.get('/api/quests', (req, res) => {
   }
 });
 
-
 // Get quests related to specific game
 app.get('/api/games/:gameId/quests', (req, res) => {
   let userId = null;
   const gameId = req.params.gameId;
 
-  try {
-    const authHeader = req.headers['authorization'];
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-        const decoded =jwt.verify(token, jwtSecret);
-        userId = decoded.id
-      }
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded =jwt.verify(token, jwtSecret);
+      userId = decoded.id
+    } catch (err) {
+
+    }
+  }
+    try {
       // Get quests
       const quests = db.prepare(`
             SELECT q.*,
@@ -407,8 +408,7 @@ app.get('/api/achievements/:achievementId', (req, res) => {
   }
 });
 
-
-//Get achievement (forspecific game)
+//Get achievement (for specific game)
 app.get('/api/games/:gameId/achievements', (req, res) => {
   let userId = null;
   const gameId = req.params.gameId;
@@ -432,7 +432,7 @@ app.get('/api/games/:gameId/achievements', (req, res) => {
     CASE 
       WHEN ? IS NULL THEN 0
       ELSE IFNULL(ua.achieved, 0)
-    END AS completed,
+    END AS achieved,
     json_group_array(
       json_object('id', p.id, 'name', p.name)
       ) as platforms
@@ -483,11 +483,11 @@ app.post('/api/achievements', authenticateToken, requireRole('admin'), (req, res
   }
 });
 
-
+// Achievement completed
 app.post('/api/achievements/:id/achieved', authenticateToken, (req, res) => {
   const achievementId = req.params.id;
   const userId = req.user.id;
-  const achieved = req.body.completed ? 1 : 0;
+  const achieved = req.body.achieved ? 1 : 0;
 
   try {
     const stmt = db.prepare(`
@@ -504,6 +504,33 @@ app.post('/api/achievements/:id/achieved', authenticateToken, (req, res) => {
   }
 });
 
+//Update Achievement
+app.put('/api/achievements/:id', authenticateToken, requireRole('admin'), (req, res) => {
+  const { id } = req.params
+  const { name, requires, description, warning, gameId, platforms } = req.body;
+  try{
+    //Delete all connections of the game from game_platform table
+    const platformDelStmt = db.prepare(`DELETE FROM achievement_platform WHERE achievement_id = ?`).run(id);
+
+    const platformInsertStmt = db.prepare(`
+      INSERT INTO achievement_platform (achievement_id, platform_id)
+      VALUES (?, ?)
+      `);
+      platforms.forEach(pid => platformInsertStmt.run(id, pid));
+
+    const updateStmt = db.prepare(`
+      UPDATE achievements
+      SET name = ?, requires = ?, description = ?, warning = ?, game_id = ?
+      WHERE id = ?`).run(name, requires, description, warning, gameId, id)
+
+    res.json({ message: `Achievement ${id} updated successfully`})
+  } catch (err) {
+    console.error("Error updating achievement: ", err)
+    res.status(500).json({ error: err.message })
+  }
+});
+
+// Get completed quests
 app.get('/api/user/quests', authenticateToken, (req, res) => {
     const userId = req.user.id;
     const stmt = db.prepare(`
@@ -515,7 +542,6 @@ app.get('/api/user/quests', authenticateToken, (req, res) => {
     const quests = stmt.all(userId);
     res.json(quests);
 });
-
 
 // Add quest
 app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
@@ -532,13 +558,11 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
         `);
       const quest = questStmt.run(gameId, title, description, requirement, location, missable, hint, extras);
 
-
       const qpStmt = db.prepare(`
         INSERT INTO quest_version (quest_id, version_id)
         VALUES (?, ?)
         `);
       versions.forEach(vId => qpStmt.run(quest.lastInsertRowid, vId))
-
 
       res.status(201).json({ id: quest.lastInsertRowid, message: 'Quest added succesfully' });
     } catch (err) {
@@ -755,7 +779,6 @@ app.put('/api/versions/:id', authenticateToken, requireRole('admin'), (req, res)
   }
 });
 
-
 // Add platform
 app.post('/api/platforms', authenticateToken, requireRole('admin'), (req, res) => {
   const { name, manufacturer } = req.body
@@ -868,7 +891,6 @@ app.get('/api/user/quests', authenticateToken, (req, res) => {
     res.json(quests);
 });
 
-
 //Ping to check if token expired
 app.get("/api/ping", authenticateToken, (req, res) => {
   res.json({ valid: true, user: req.user });
@@ -899,3 +921,4 @@ module.exports = authenticateToken;
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
 });
+
