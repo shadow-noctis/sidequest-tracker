@@ -22,16 +22,27 @@ function GamesList() {
     if (loading) return <p>Loading games</p>;
 
     return (
-        <div>
-            <h2>Games</h2>
-            <ul>
+        <>
+            <h2 className="text-center text-4xl text-accent px-4 py-4">Games</h2>
+
+            <div className='grid grid-cols-2 gap-6 px-4'>
                 {games.map(game => (
-                    <li key={game.id}>
-                        <Link to={`/games/${game.id}/quests`} state={{ gameName: game.name}}>{game.name}</Link>
-                    </li>
+                    <Link 
+                        key={game.id}
+                        to={`/games/${game.id}/quests`}
+                        state={{ gameName: game.name }}
+                        className="rounded-2xl p-6 text-center cursor-pointer 
+                            bg-surface/80 hover:bg-surface/100 
+                            border border-accent/30 hover:border-accent/80 
+                            shadow-md hover:shadow-accent/30 
+                            text-accentAlt text-xl font-semibold tracking-wide 
+                            transition-all duration-200 block"
+                        >
+                            {game.name}
+                        </Link>
                 ))}
-            </ul>
-        </div>
+            </div>
+        </>
     )
 }
 

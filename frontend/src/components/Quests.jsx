@@ -221,7 +221,7 @@ function QuestList() {
           </li>
         ))}
       </ul>
-      <Link to={'/games'}><button>Games List</button></Link>
+      <Link to={'/games(quest)'}><button>Games List</button></Link>
 
       {showModal && (
         <DeleteModal
