@@ -6,3 +6,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(142, 124, 195, 0.4); }
+    50% { box-shadow: 0 0 18px rgba(217, 179, 255, 0.7); }
+  }

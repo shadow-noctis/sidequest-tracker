@@ -17,7 +17,7 @@ function Home() {
 
     return (
         <div className="bg-background text-text text-center py-4">
-            <h1 className="text-4xl font-bold px-4">QuestLedger</h1>
+            <h1 className="text-4xl font-bold px-4 py-6">QuestLedger</h1>
             <p className="py-6 md:py-4"><i>Track your sidequests to forge your own story...</i></p>
             <p className="text-center px-10">
                 Welcome, adventurer!<br />

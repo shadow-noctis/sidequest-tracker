@@ -172,55 +172,75 @@ function QuestList() {
   if (loading) return <p>Loading quests...</p>;
 
   return (
-    <div>
-      <h2>{gameName}</h2>
-      {versions.map(v => (
-        <button key={v.id} name={v.id} value={v.name} onClick={handleClick}>{v.name}</button>
-      ))}<br />
-      <button onClick={expandAll}>Expand All</button>
-      <button onClick={collapseAll}>Collapse All</button>
-      <ul>
-        {quests.filter(q => q.versions.some(v => v.name === selectedVersion))
-        .map(quest => (
-          <li key={quest.id}>
-            <div onClick={() => toggleQuest(quest.id)} style={{ cursor: "pointer" }}>
-              <strong>{quest.title}</strong> {expandedQuests[quest.id] ? "▲" : "▼"}
-            </div>
-
-            {expandedQuests[quest.id] && (
-              <ul>
-                <li>Description: {quest.description}</li>
-                <li>Location: {quest.location}</li>
-                <li>Requirements: {quest.requirement}</li>
-                <li>Missable: {quest.missable ? ' ✓' : ' ✗'}</li>
-                {quest.extras && Object.entries(quest.extras).map(([key, value]) =>
-                <li key={key}>
-                  {key}: {value}
-                </li>
+    <div className='px-10'>
+      <h2 className="text-center text-3xl text-accent px-4 py-4">{gameName}</h2>
+      <div className='mx-auto mt-8 bg-surface/70 border border-accent/20 rounded-2xl shadow-lg shadow-accent/10 p-4'>
+        <div className="flex justify-center">
+          {versions.map(v => (
+            <button key={v.id} name={v.id} value={v.name} onClick={handleClick}
+              className={`
+                flex-1 min-w-0 px-2 py-1 tracking-wide font-bold text-center cursor-pointer hover:bg-surface/100
+                border border-accent/30 hover:border-accent/80 
+                shadow-md hover:shadow-accent/30 
+                text-accentAlt tracking-wide 
+                transition-all duration-200
+                ${selectedVersion === v.name
+                  ? 'bg-accentAlt text-background shadow-lg'
+                  : 'bg-surface text-accent hover:bg-accent/30'}
+              `}
+            >
+              {v.name}
+            </button>
+          ))}<br />
+        </div>
+          <button onClick={expandAll}>Expand All</button>
+          <button onClick={collapseAll}>Collapse All</button>
+        <div className='flex justify-center px-8'>
+          <ul>
+            {quests.filter(q => q.versions.some(v => v.name === selectedVersion))
+            .map(quest => (
+              <li key={quest.id}>
+                <div onClick={() => toggleQuest(quest.id)} style={{ cursor: "pointer" }}>
+                  <strong>{quest.title}</strong> {expandedQuests[quest.id] ? "▲" : "▼"}
+                </div>
+              <div>
+                {expandedQuests[quest.id] && (
+                  <ul>
+                    <li>Description: {quest.description}</li>
+                    <li>Location: {quest.location}</li>
+                    <li>Requirements: {quest.requirement}</li>
+                    <li>Missable: {quest.missable ? ' ✓' : ' ✗'}</li>
+                    {quest.extras && Object.entries(quest.extras).map(([key, value]) =>
+                    <li key={key}>
+                      {key}: {value}
+                    </li>
+                    )}
+                    {quest.hint && (
+                      <li>Hint: {hintsVisible[quest.id] ? (
+                        <>{quest.hint}
+                        <button onClick={() => toggleHint(quest.id)}>Hide Hint</button>
+                        </>
+                      ) : (
+                        <button onClick={() => toggleHint(quest.id)}>Show Hint</button>
+                      )}
+                      </li>
+                    )}
+                    <li>Completed: {quest.completed ? ' ✓' : ' ✗'}</li>
+                    {user?.role === 'admin' && (<li><Link to={`/quests/${quest.id}`}>Edit</Link></li>)}
+                    {user?.role === 'admin' && (<li><button onClick={() => handleDeleteClick(quest)}>Delete</button></li>)}
+                      <li>
+                        <button onClick={() => completeQuest(quest.id, quest.completed)}>
+                          {quest.completed ? 'Mark as Not Completed' : 'Mark as Completed'}
+                        </button>
+                      </li>
+                  </ul>
                 )}
-                {quest.hint && (
-                  <li>Hint: {hintsVisible[quest.id] ? (
-                    <>{quest.hint}
-                    <button onClick={() => toggleHint(quest.id)}>Hide Hint</button>
-                    </>
-                  ) : (
-                    <button onClick={() => toggleHint(quest.id)}>Show Hint</button>
-                  )}
-                  </li>
-                )}
-                <li>Completed: {quest.completed ? ' ✓' : ' ✗'}</li>
-                {user?.role === 'admin' && (<li><Link to={`/quests/${quest.id}`}>Edit</Link></li>)}
-                {user?.role === 'admin' && (<li><button onClick={() => handleDeleteClick(quest)}>Delete</button></li>)}
-                  <li>
-                    <button onClick={() => completeQuest(quest.id, quest.completed)}>
-                      {quest.completed ? 'Mark as Not Completed' : 'Mark as Completed'}
-                    </button>
-                  </li>
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
       <Link to={'/games(quest)'}><button>Games List</button></Link>
 
       {showModal && (
