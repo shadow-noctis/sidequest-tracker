@@ -168,51 +168,105 @@ function GameManager() {
         }
     }, [location, navigate]);
 
-    return(
-        <div id='game-manager'>
-            <h2>Games</h2>
-            
-            {/* List existing platforms*/}
-            <h4>Existing games</h4>
-            <ul>
-                {games.map(game => (
-                        <li key={game.id}>{game.name}
-                        {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(game)}>Delete</button>)}
-                        {user?.role === 'admin' && (<Link to={`/games/${game.id}`}>Edit</Link>)}
-                        </li>
-                ))}
+    return (
+        <div id="game-manager" className="px-8 py-6 text-text">
+          <h2 className="text-4xl font-bold text-accent mb-6 text-center">Games</h2>
+    
+          {/* Existing Games */}
+          <section className="mb-8">
+            <h3 className="text-2xl text-accentAlt font-semibold mb-4">
+              Existing Games
+            </h3>
+            <ul className="space-y-2">
+              {games.map((game) => (
+                <li
+                  key={game.id}
+                  className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl shadow-md hover:bg-accent/10 transition"
+                >
+                  <span className="text-lg font-medium">{game.name}</span>
+                  <div className="flex gap-3">
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={() => handleDeleteClick(game)}
+                        className="text-error hover:text-error/80 transition font-semibold"
+                      >
+                        Delete
+                      </button>
+                    )}
+                    {user?.role === 'admin' && (
+                      <Link
+                        to={`/games/${game.id}`}
+                        className="text-accentAlt hover:text-accent font-medium"
+                      >
+                        Edit
+                      </Link>
+                    )}
+                  </div>
+                </li>
+              ))}
             </ul>
-            <h3>Add New Game</h3>
-            <input 
-                type='text'
-                placeholder='Name'
-                value={gameName}
-                onChange={(g) => setGameName(g.target.value)}                
-            />
-            <ul>
-                {allPlatforms.map(platform => (
-                        <li key={platform.id}>
-                            <input type='checkbox' value={platform.name} onChange={handleChecked} checked={platforms.includes(platform.name)}/>
-                            <label>{platform.name}</label>
-                        </li>
-                
-                ))}
-            </ ul>
-            <p>Selected: {platforms.join(", ")}</p>
-            <button onClick={addGame}>Add Game</button>
-
-            {confirmModal && (
-                <ConfirmModal
-                itemName={selectedDelete.name}
-                onConfirm={forceDeleteGame}
-                onCancel={() => setConfirmModal(false)}
-                questCount={questCount}
+          </section>
+    
+          {/* Add New Game */}
+          <section className="bg-surface p-6 rounded-2xl shadow-xl">
+            <h3 className="text-2xl text-accentAlt font-semibold mb-4">
+              Add New Game
+            </h3>
+    
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+              <label className="block">
+                <span className="text-muted">Name</span>
+                <input
+                  type="text"
+                  placeholder="Name"
+                  value={gameName}
+                  onChange={(g) => setGameName(g.target.value)}
+                  className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
                 />
-            )}
+              </label>
+    
+              {/* Platforms */}
+              <div>
+                <span className="text-muted block mb-2">Platforms</span>
+                <ul className="grid grid-cols-2 gap-2">
+                  {allPlatforms.map((platform) => (
+                    <li
+                      key={platform.id}
+                      className="flex items-center bg-[#1a1633] px-3 py-2 rounded-lg hover:bg-accent/10 transition"
+                    >
+                      <input
+                        type="checkbox"
+                        value={platform.name}
+                        onChange={handleChecked}
+                        checked={platforms.includes(platform.name)}
+                        style={{ accentColor: '#8e7cc3' }}
+                        className="mr-2 cursor-pointer transition"
+                      />
+                      <label>{platform.name}</label>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+    
+              <button
+                onClick={addGame}
+                className="bg-accent hover:bg-accentAlt text-[#0d0b1e] font-semibold px-6 py-2 rounded-xl shadow-lg transition"
+              >
+                Add Game
+              </button>
+            </form>
+          </section>
+    
+          {/* Confirm Modal */}
+          {confirmModal && (
+            <ConfirmModal
+              itemName={selectedDelete.name}
+              onConfirm={forceDeleteGame}
+              onCancel={() => setConfirmModal(false)}
+              questCount={questCount}
+            />
+          )}
         </div>
-    )
-
-
-
+      )
 };
 export default GameManager;

@@ -30,6 +30,8 @@ function AchievementsList() {
   const { user } = useContext(AuthContext);
   const token = localStorage.getItem('token');
 
+  const [allExpanded, setAllExpanded] = useState(false)
+
   
   
   // Expand or collapse info:
@@ -45,10 +47,12 @@ function AchievementsList() {
     const allExpanded = {};
     achievements.forEach((a) => (allExpanded[a.id] = true));
     setExpandedAchievements(allExpanded);
+    setAllExpanded(true)
   }
 
   const collapseAll = () => {
     setExpandedAchievements({});
+    setAllExpanded(false)
   };
 
   const toggleWarning = (id) => {
@@ -141,49 +145,173 @@ function AchievementsList() {
   if (loading) return <p>Loading quests...</p>;
 
   return (
-    <div>
-      <h2>{gameName}</h2>
-      {platforms.map(p => (
-        <button key={p.id} name={p.id} value={p.name} onClick={handleClick}>{p.name}</button>
-      ))}<br />
-      <button onClick={expandAll}>Expand All</button>
-      <button onClick={collapseAll}>Collapse All</button>
-      <ul>
-        {achievements.filter(a => a.platforms.some(p => p.name === selectedPlatform))
-        .map(a => (
-          <li key={a.id}>
-            <div onClick={() => toggleQuest(a.id)} style={{ cursor: "pointer" }}>
-              <strong>{a.name}</strong> {expandedAchievements[a.id] ? "▲" : "▼"}
-            </div>
+    <div className="px-10">
+  
+      {/* Platform Selector */}
+      <div className="mx-auto mt-8 bg-surface/70 border border-accent/20 rounded-2xl shadow-lg shadow-accent/10 p-4">
+      <h2 className="text-center text-3xl text-accent px-4 py-4">{gameName}</h2>
+        <div className="flex justify-center gap-2 mb-4">
+          {platforms.map(p => (
+            <button
+              key={p.id}
+              name={p.id}
+              value={p.name}
+              onClick={handleClick}
+              className={`
+                flex-1 px-3 py-2 text-sm sm:text-base tracking-wide font-bold rounded-lg
+                border transition-all duration-200
+                ${selectedPlatform === p.name
+                  ? 'bg-accentAlt text-background border-accentAlt shadow-lg shadow-accentAlt/30'
+                  : 'bg-surface text-accent border-accent/30 hover:border-accent/80 hover:bg-accent/10'}
+              `}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+  
+        {/* Expand / Collapse Controls */}
+        <div className="flex justify-center gap-4 mb-6">
+          <button
+            onClick={expandAll}
+            className={`
+              px-4 py-2 rounded-xl font-semibold transition
+              ${allExpanded
+                ? 'bg-accent/10 text-muted'
+                : 'bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt'}
+            `}
+            disabled={allExpanded}
+          >
+            Expand All
+          </button>
+          <button
+            onClick={collapseAll}
+            className={`
+              px-4 py-2 rounded-xl font-semibold transition
+              ${!allExpanded
+                ? 'bg-accent/10 text-muted'
+                : 'bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt'}
+            `}
+            disabled={!allExpanded}
+          >
+            Collapse All
+          </button>
+        </div>
+  
+        {/* Achievements List */}
+        <ul className="space-y-4">
+        {achievements
+          .filter(a => a.platforms.some(p => p.name === selectedPlatform))
+          .map(a => {
+            const isExpanded = expandedAchievements[a.id];
+            return (
+              <li
+                key={a.id}
+                className={`
+                  border rounded-2xl shadow-md overflow-hidden transition-all duration-300
+                  ${isExpanded
+                    ? 'bg-accent/20 border-accentAlt shadow-accentAlt/30'
+                    : 'bg-surface/90 border-accent/20 shadow-accent/10 hover:bg-accent/10'}
+                `}
+              >
+                {/* Header */}
+                <div
+                  onClick={() => toggleQuest(a.id)}
+                  className={`
+                    flex justify-between items-center px-4 py-3 cursor-pointer
+                    transition-all duration-300
+                    ${isExpanded ? 'bg-accent/30' : ''}
+                  `}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <span
+                      className={`font-semibold text-lg transition-colors ${
+                        isExpanded ? 'text-accentAlt' : 'text-accent'
+                      }`}
+                    >
+                      {a.name}
+                    </span>
+                    <span className="text-muted text-sm">
+                      {a.achieved ? '✓ Achieved' : '✗ Not Achieved'}
+                    </span>
+                  </div>
 
-            {expandedAchievements[a.id] && (
-              <ul>
-                <li>Requires: {a.requires}</li>
-                {a.description && (<li>Description: {a.description}</li>)}
-                {a.warning && (<li>Warning: {a.warning}</li>)}
-                {a.warning && (
-                  <li>Warning: {warningVisible[a.id] ? (
-                    <>{a.warning}
-                    <button onClick={() => toggleWarning(a.id)}>Hide Warning</button>
-                    </>
-                  ) : (
-                    <button onClick={() => toggleWarning(a.id)}>Show Warning</button>
-                  )}
-                  </li>
-                )}
-                <li>Achieved: {a.achieved ? ' ✓' : ' ✗'}</li>
-                  <li>
-                    <button onClick={() => completeAchievement(a.id, a.achieved)}>
-                      {a.achieved ? 'Mark undone' : 'Mark as Achieved'}
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        completeAchievement(a.id, a.achieved);
+                      }}
+                      className={`px-3 py-1 rounded-lg text-sm transition-all ${
+                        a.achieved
+                          ? 'bg-success/20 text-success hover:bg-success/30'
+                          : 'bg-accent/20 text-accentAlt hover:bg-accent/30'
+                      }`}
+                    >
+                      {a.achieved ? 'Mark Undone' : 'Mark Achieved'}
                     </button>
-                  </li>
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-      <Link to={'/games(achievement)'}><button>Games List</button></Link>
 
+                    <span
+                      className={`text-lg transition-transform ${
+                        isExpanded ? 'rotate-180 text-accentAlt' : 'rotate-0 text-muted'
+                      }`}
+                    >
+                      ▼
+                    </span>
+                  </div>
+                </div>
+
+                {/* Always-visible Requires field */}
+                <div className="px-5 py-2 border-t border-accent/20 bg-surface/80 text-sm text-text">
+                  <p><strong>Requires:</strong> {a.requires || 'None'}</p>
+                </div>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div className="px-5 py-4 border-t border-accent/20 bg-surface/90 space-y-1 text-sm text-text">
+                    {a.description && <p><strong>Description:</strong> {a.description}</p>}
+
+                    {a.warning && (
+                      <p>
+                        <strong>Warning:</strong>{' '}
+                        {warningVisible[a.id] ? (
+                          <>
+                            {a.warning}{' '}
+                            <button
+                              onClick={() => toggleWarning(a.id)}
+                              className="text-accentAlt underline hover:text-accent"
+                            >
+                              Hide
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => toggleWarning(a.id)}
+                            className="text-accentAlt underline hover:text-accent"
+                          >
+                            Show
+                          </button>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+      </ul>
+      </div>
+  
+      {/* Navigation */}
+      <div className="text-center mt-6">
+        <Link to="/games(achievement)">
+          <button className="bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt px-4 py-2 rounded-xl font-semibold transition">
+            Games List
+          </button>
+        </Link>
+      </div>
+  
+      {/* Delete Modal */}
       {showModal && (
         <DeleteModal
           itemName={selectedQuest.title}

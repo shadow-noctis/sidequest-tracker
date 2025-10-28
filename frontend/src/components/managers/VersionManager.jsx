@@ -184,88 +184,180 @@ const deleteVersion = async (ver) => {
         fetchVersions();
     }, []);
 
-    return(
-        <div id='version_add'>
-            <h2>Versions</h2>
-
-            {/* List existing versions*/}
-            <h3>Existing Versions</h3>
-            {versions.map(ver => (
-                <div key={ver.gameName}>
-                    <h5>{ver.gameName}</h5>
-                    <ul>
-                        {ver.version.map(v => (
-                            <li key={v.id}>
-                                {v.name}
-                                {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(v, 'version')}>Delete</button>)}
-                                {user?.role === 'admin' && (<Link to={`/versions/${v.id}`}>Edit</Link>)}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+    return (
+        <div id="version_add" className="px-8 py-6 text-text">
+          <h2 className="text-4xl font-bold text-accent mb-6 text-center">Versions</h2>
+    
+          {/* Existing Versions */}
+          <section className="mb-8">
+            <h3 className="text-2xl text-accentAlt font-semibold mb-4">
+              Existing Versions
+            </h3>
+    
+            {versions.map((ver) => (
+              <div key={ver.gameName} className="mb-6">
+                <h4 className="text-xl font-semibold text-accentAlt mb-2 border-b border-accent/30 pb-1">
+                  {ver.gameName}
+                </h4>
+                <ul className="space-y-2">
+                  {ver.version.map((v) => (
+                    <li
+                      key={v.id}
+                      className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl shadow-md hover:bg-accent/10 transition"
+                    >
+                      <span className="text-lg font-medium">{v.name}</span>
+                      <div className="flex gap-3">
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={() => handleDeleteClick(v, 'version')}
+                            className="text-error hover:text-error/80 transition font-semibold"
+                          >
+                            Delete
+                          </button>
+                        )}
+                        {user?.role === 'admin' && (
+                          <Link
+                            to={`/versions/${v.id}`}
+                            className="text-accentAlt hover:text-accent font-medium"
+                          >
+                            Edit
+                          </Link>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-
-            {/* Add new Version*/}
-            <div>
-                <form onSubmit={addVersion}>
-                    <h3>Add version</h3>
-                    <label>
-                        Name:
-                        <input name='name' placeholder='Name' value={versionForm.name} onChange={handleChange}/>
-                    </label><br />
-                    <label>
-                        Year:
-                        <input name='year' placeholder='Release Year' value={versionForm.year} onChange={handleChange} />
-                    </label><br />
-                    <label>
-                        Developer:
-                        <input name='publisher' placeholder='Developer' value={versionForm.publisher} onChange={handleChange} />
-                    </label><br />
-                    <label>
-                        Game:
-                        <select name='gameId' value={versionForm.gameId || ""} onChange={handleChange}>
-                        <option value="">
-                            -- Select a Game --
-                        </option>
-                        {games.map((g) => (
-                            <option key={g.id} value={g.id}>
-                                {g.name}
-                            </option>
-                        ))}
-                        </select>
-                    </label><br />
-
-                    <label>
-                    Extras:
-                        {versionForm.extras.map((extra, idx) => (
-                            <div key={idx}>
-                                <input
-                                    type='text'
-                                    placeholder='Extra field name'
-                                    value={extra}
-                                    onChange={e => handleExtraChange(idx, e.target.value)}
-                                    />
-                                    <button type='button' onClick={() => removeExtra(idx)}>Delete</button>
-                            </div>
-                        ))}
-                        <button type='button' onClick={addExtra}>Add Extra</button><br />
-                        <p>Extras: {versionForm.extras}</p>
-                    </label><br />
-                    <button type='submit'>Add Version</button>
-                    <button type='button' onClick={resetVersion}>Clear</button>
-                </form>
-            </div>
-
-            {confirmModal && (
-                    <ConfirmModal
-                    itemName={selectedDelete.name}
-                    onConfirm={forceDeleteVersion}
-                    onCancel={() => setConfirmModal(false)}
-                    questCount={questCount}
-                    />
-                )}
+          </section>
+    
+          {/* Add New Version */}
+          <section className="bg-surface p-6 rounded-2xl shadow-xl">
+            <h3 className="text-2xl text-accentAlt font-semibold mb-4">
+              Add New Version
+            </h3>
+    
+            <form onSubmit={addVersion} className="space-y-4">
+              {/* Name */}
+              <label className="block">
+                <span className="text-muted">Name</span>
+                <input
+                  name="name"
+                  placeholder="Version name"
+                  value={versionForm.name}
+                  onChange={handleChange}
+                  className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                />
+              </label>
+    
+              {/* Year */}
+              <label className="block">
+                <span className="text-muted">Release Year</span>
+                <input
+                  name="year"
+                  placeholder="e.g. 2022"
+                  value={versionForm.year}
+                  onChange={handleChange}
+                  className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                />
+              </label>
+    
+              {/* Developer */}
+              <label className="block">
+                <span className="text-muted">Developer</span>
+                <input
+                  name="publisher"
+                  placeholder="Developer name"
+                  value={versionForm.publisher}
+                  onChange={handleChange}
+                  className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                />
+              </label>
+    
+              {/* Game */}
+              <label className="block">
+                <span className="text-muted">Game</span>
+                <select
+                  name="gameId"
+                  value={versionForm.gameId || ''}
+                  onChange={handleChange}
+                  className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                >
+                  <option value="">-- Select a Game --</option>
+                  {games.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+    
+              {/* Extras */}
+              <div>
+                <span className="text-muted block mb-2">Extras</span>
+                <div className="space-y-2">
+                  {versionForm.extras.map((extra, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 bg-[#1a1633] p-2 rounded-xl"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Extra field name"
+                        value={extra}
+                        onChange={(e) => handleExtraChange(idx, e.target.value)}
+                        className="flex-1 bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeExtra(idx)}
+                        className="text-error hover:text-error/80 transition font-semibold"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+    
+                  <button
+                    type="button"
+                    onClick={addExtra}
+                    className="text-accentAlt hover:text-accent font-semibold"
+                  >
+                    + Add Extra
+                  </button>
+                </div>
+              </div>
+    
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3 pt-2">
+                <button
+                  type="submit"
+                  className="bg-accent hover:bg-accentAlt text-[#0d0b1e] font-semibold px-6 py-2 rounded-xl shadow-lg transition"
+                >
+                  Add Version
+                </button>
+                <button
+                  type="button"
+                  onClick={resetVersion}
+                  className="bg-muted/30 hover:bg-muted/50 text-text font-semibold px-6 py-2 rounded-xl shadow-lg transition"
+                >
+                  Clear
+                </button>
+              </div>
+            </form>
+          </section>
+    
+          {/* Confirm Modal */}
+          {confirmModal && (
+            <ConfirmModal
+              itemName={selectedDelete.name}
+              onConfirm={forceDeleteVersion}
+              onCancel={() => setConfirmModal(false)}
+              questCount={questCount}
+            />
+          )}
         </div>
-    )
+      )
 
 };
 

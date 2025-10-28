@@ -108,43 +108,86 @@ function PlatformManager() {
     }, [location, navigate]);
 
     return(
-        <div id="platform_add">
-            <h2>Platforms</h2>
+        <div id="platform_add" className="px-8 py-6 text-text">
+            <h2 className="text-4xl font-bold text-accent mb-6 text-center">Platforms</h2>
 
             {/* List existing platforms*/}
-            <h3>Existing platforms</h3>
-            <ul>
-                {allPlatforms.map(platform => (
-                    <li key={platform.id}>{platform.name}
-                        {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(platform)}>Delete</button>)}
-                    </li>
-                ))}
-            </ul>
+            <section className="mb-8">
+            <h3 className="text-2xl text-accentAlt font-semibold mb-4">Existing platforms</h3>
+                <ul className="space-y-2">
+                    {allPlatforms.map(platform => (
+                        <li key={platform.id}
+                            className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl shadow-md hover:bg-accent/10 transition">
+                            <span className="text-lg font-medium">{platform.name}</span>
+                            {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(platform)}
+                                className="text-error hover:text-error/80 transition font-semibold">
+                                    Delete
+                                </button>)}
+                        </li>
+                    ))}
+                </ul>
+            </section>
 
             {/* Add new platform*/}
-            <h3>Add New Platform</h3>
+            <section className="bg-surface p-6 rounded-2xl shadow-xl">
+  <div className="space-y-4">
+    <h3 className="text-2xl text-accentAlt font-semibold mb-2">
+      Add New Platform
+    </h3>
 
-            <input 
-                type='text'
-                placeholder='Name'
-                value={platformName}
-                onChange={(p) => setPlatformName(p.target.value)}            
-            />
-            <input 
-                type='text'
-                placeholder='Manufacturer'
-                value={manufacturer}
-                onChange={(p) => setManufacturer(p.target.value)}      
-            />
-                <button onClick={addPlatform}>Add Platform</button>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        addPlatform();
+      }}
+      className="space-y-4"
+    >
+      {/* Platform Name */}
+      <label className="block">
+        <span className="text-muted">Name</span>
+        <input
+          type="text"
+          placeholder="Platform name"
+          value={platformName}
+          onChange={(p) => setPlatformName(p.target.value)}
+          className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+        />
+      </label>
 
-        {deleteModal && (
-            <DeleteModal
-            itemName={selectedDelete.name}
-            onConfirm={deletePlatform}
-            onCancel={() => setDeleteModal(false)}
-            />
-        )}
+      {/* Manufacturer */}
+      <label className="block">
+        <span className="text-muted">Manufacturer</span>
+        <input
+          type="text"
+          placeholder="Manufacturer"
+          value={manufacturer}
+          onChange={(p) => setManufacturer(p.target.value)}
+          className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+        />
+      </label>
+
+      {/* Submit Button */}
+      <div className="pt-2 text-center">
+        <button
+          type="submit"
+          className="bg-accent hover:bg-accentAlt text-[#0d0b1e] font-semibold px-6 py-2 rounded-xl shadow-lg transition"
+        >
+          Add Platform
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {/* Delete Modal */}
+  {deleteModal && (
+    <DeleteModal
+      itemName={selectedDelete.name}
+      onConfirm={deletePlatform}
+      onCancel={() => setDeleteModal(false)}
+    />
+  )}
+</section>
+
         </ div>
     )
 
