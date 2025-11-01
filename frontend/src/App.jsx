@@ -33,7 +33,7 @@ export default function App() {
         pauseOnHover
       />
       <Router>
-        <div id='menu' className='bg-surface text-text px-6 py-4 shadow-lg drop-shadow-[0_0_15px_rgba(62,23,145,0.6)]'>
+        <div id='menu' className='bg-gradient-to-l from-[#0a0920] via-[#1a1440] to-[#08061a] text-text px-6 py-4 shadow-lg drop-shadow-[0_0_15px_rgba(62,23,145,0.6)]'>
           <div className="flex items-center justify-between max-w-6xl mx-auto">
             <ul className="flex justify-between items-center max-w-5xl mx-auto">
                 <li><NavLink to='/' className="px-4 hover:text-accent transition-colors">Home</NavLink></li>

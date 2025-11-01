@@ -142,14 +142,17 @@ function AchievementsList() {
    } 
   }, [])
 
-  if (loading) return <p>Loading quests...</p>;
+  if (loading) return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-indigo-950 to-black text-gray-100 px-6 py-10">
+      <p className="text-center text-indigo-300">Loading achievements...</p>
+    </div>
+  );
 
   return (
-    <div className="px-10">
-  
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-indigo-950 to-black text-gray-100 px-6 py-10">
       {/* Platform Selector */}
-      <div className="mx-auto mt-8 bg-surface/70 border border-accent/20 rounded-2xl shadow-lg shadow-accent/10 p-4">
-      <h2 className="text-center text-3xl text-accent px-4 py-4">{gameName}</h2>
+      <div className="max-w-4xl mx-auto bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-md rounded-2xl shadow-[0_0_25px_rgba(140,90,255,0.4)] p-8 border border-indigo-700/40">
+      <h2 className="text-center text-4xl font-bold text-indigo-300 mb-6 tracking-wide drop-shadow-[0_0_10px_rgba(180,120,255,0.6)]">{gameName}</h2>
         <div className="flex justify-center gap-2 mb-4">
           {platforms.map(p => (
             <button
@@ -161,8 +164,8 @@ function AchievementsList() {
                 flex-1 px-3 py-2 text-sm sm:text-base tracking-wide font-bold rounded-lg
                 border transition-all duration-200
                 ${selectedPlatform === p.name
-                  ? 'bg-accentAlt text-background border-accentAlt shadow-lg shadow-accentAlt/30'
-                  : 'bg-surface text-accent border-accent/30 hover:border-accent/80 hover:bg-accent/10'}
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-[0_0_15px_rgba(140,90,255,0.4)]'
+                  : 'bg-gray-800/50 text-indigo-100 border-indigo-700/40 hover:border-indigo-600/60 hover:bg-indigo-900/40'}
               `}
             >
               {p.name}
@@ -177,8 +180,8 @@ function AchievementsList() {
             className={`
               px-4 py-2 rounded-xl font-semibold transition
               ${allExpanded
-                ? 'bg-accent/10 text-muted'
-                : 'bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt'}
+                ? 'bg-gray-700/50 text-gray-400 cursor-not-allowed'
+                : 'bg-indigo-600/80 hover:bg-indigo-600 text-white'}
             `}
             disabled={allExpanded}
           >
@@ -189,8 +192,8 @@ function AchievementsList() {
             className={`
               px-4 py-2 rounded-xl font-semibold transition
               ${!allExpanded
-                ? 'bg-accent/10 text-muted'
-                : 'bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt'}
+                ? 'bg-gray-700/50 text-gray-400 cursor-not-allowed'
+                : 'bg-indigo-600/80 hover:bg-indigo-600 text-white'}
             `}
             disabled={!allExpanded}
           >
@@ -210,8 +213,8 @@ function AchievementsList() {
                 className={`
                   border rounded-2xl shadow-md overflow-hidden transition-all duration-300
                   ${isExpanded
-                    ? 'bg-accent/20 border-accentAlt shadow-accentAlt/30'
-                    : 'bg-surface/90 border-accent/20 shadow-accent/10 hover:bg-accent/10'}
+                    ? 'bg-indigo-900/30 border-indigo-600/60 shadow-[0_0_15px_rgba(140,90,255,0.4)]'
+                    : 'bg-gray-800/50 border-indigo-700/40 shadow-md hover:shadow-[0_0_15px_rgba(140,90,255,0.3)] hover:bg-indigo-900/40'}
                 `}
               >
                 {/* Header */}
@@ -220,18 +223,18 @@ function AchievementsList() {
                   className={`
                     flex justify-between items-center px-4 py-3 cursor-pointer
                     transition-all duration-300
-                    ${isExpanded ? 'bg-accent/30' : ''}
+                    ${isExpanded ? 'bg-indigo-900/40' : ''}
                   `}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                     <span
                       className={`font-semibold text-lg transition-colors ${
-                        isExpanded ? 'text-accentAlt' : 'text-accent'
+                        isExpanded ? 'text-indigo-200' : 'text-indigo-200'
                       }`}
                     >
                       {a.name}
                     </span>
-                    <span className="text-muted text-sm">
+                    <span className="text-gray-400 text-sm">
                       {a.achieved ? '✓ Achieved' : '✗ Not Achieved'}
                     </span>
                   </div>
@@ -244,8 +247,8 @@ function AchievementsList() {
                       }}
                       className={`px-3 py-1 rounded-lg text-sm transition-all ${
                         a.achieved
-                          ? 'bg-success/20 text-success hover:bg-success/30'
-                          : 'bg-accent/20 text-accentAlt hover:bg-accent/30'
+                          ? 'bg-green-600/30 text-green-300 hover:bg-green-600/40'
+                          : 'bg-indigo-600/30 text-indigo-200 hover:bg-indigo-600/40'
                       }`}
                     >
                       {a.achieved ? 'Mark Undone' : 'Mark Achieved'}
@@ -253,7 +256,7 @@ function AchievementsList() {
 
                     <span
                       className={`text-lg transition-transform ${
-                        isExpanded ? 'rotate-180 text-accentAlt' : 'rotate-0 text-muted'
+                        isExpanded ? 'rotate-180 text-indigo-300' : 'rotate-0 text-gray-400'
                       }`}
                     >
                       ▼
@@ -262,13 +265,13 @@ function AchievementsList() {
                 </div>
 
                 {/* Always-visible Requires field */}
-                <div className="px-5 py-2 border-t border-accent/20 bg-surface/80 text-sm text-text">
+                <div className="px-5 py-2 border-t border-indigo-700/40 bg-gray-800/70 text-sm text-gray-100">
                   <p><strong>Requires:</strong> {a.requires || 'None'}</p>
                 </div>
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="px-5 py-4 border-t border-accent/20 bg-surface/90 space-y-1 text-sm text-text">
+                  <div className="px-5 py-4 border-t border-indigo-700/40 bg-gray-800/70 space-y-1 text-sm text-gray-100">
                     {a.description && <p><strong>Description:</strong> {a.description}</p>}
 
                     {a.warning && (
@@ -279,7 +282,7 @@ function AchievementsList() {
                             {a.warning}{' '}
                             <button
                               onClick={() => toggleWarning(a.id)}
-                              className="text-accentAlt underline hover:text-accent"
+                              className="text-indigo-300 underline hover:text-indigo-200"
                             >
                               Hide
                             </button>
@@ -287,7 +290,7 @@ function AchievementsList() {
                         ) : (
                           <button
                             onClick={() => toggleWarning(a.id)}
-                            className="text-accentAlt underline hover:text-accent"
+                            className="text-indigo-300 underline hover:text-indigo-200"
                           >
                             Show
                           </button>
@@ -305,7 +308,7 @@ function AchievementsList() {
       {/* Navigation */}
       <div className="text-center mt-6">
         <Link to="/games(achievement)">
-          <button className="bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt px-4 py-2 rounded-xl font-semibold transition">
+          <button className="bg-indigo-600/80 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl font-semibold transition shadow-[0_0_15px_rgba(140,90,255,0.4)]">
             Games List
           </button>
         </Link>

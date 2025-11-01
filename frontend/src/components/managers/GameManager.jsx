@@ -181,7 +181,7 @@ function GameManager() {
               {games.map((game) => (
                 <li
                   key={game.id}
-                  className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl shadow-md hover:bg-accent/10 transition"
+                  className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl border border-solid border-accent/30 shadow-md hover:bg-accent/10 transition"
                 >
                   <span className="text-lg font-medium">{game.name}</span>
                   <div className="flex gap-3">
@@ -208,7 +208,7 @@ function GameManager() {
           </section>
     
           {/* Add New Game */}
-          <section className="bg-surface p-6 rounded-2xl shadow-xl">
+          <section className="bg-surface p-6 rounded-2xl shadow-xl border border-solid border-accent/30">
             <h3 className="text-2xl text-accentAlt font-semibold mb-4">
               Add New Game
             </h3>
