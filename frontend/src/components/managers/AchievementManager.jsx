@@ -152,7 +152,7 @@ function AchievementManager() {
               {achievements.map((a) => (
                 <li
                   key={a.id}
-                  className="flex items-center justify-between bg-surface px-4 py-2 rounded-xl border border-solid border-accent/30 shadow-md hover:bg-accent/10 transition"
+                  className="flex items-center justify-between bg-surface px-4 py-2 rounded-xl shadow-md hover:bg-accent/10 transition"
                 >
                   <span className="text-lg">{a.name}</span>
                   {user?.role === 'admin' && (

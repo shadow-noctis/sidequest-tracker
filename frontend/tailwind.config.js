@@ -4,14 +4,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0a0920',   // deeper cosmic blue-purple base
-        surface: '#151232',      // surface panels – soft indigo twilight
-        accent: '#7a63d1',       // mystical violet (main highlight)
-        accentAlt: '#bfa7ff',    // moonlight glow for headings & borders
-        text: '#e8e6ff',         // gentle off-white text for contrast
-        muted: '#665a8c',        // subdued violet-gray for secondary text
-        success: '#7edfb5',      // soft aurora green
-        error: '#f76d6d',        // warmer, glowing red for contrast
+        background: '#0d0b1e',
+        surface: '#1a1633',
+        accent: '#8e7cc3',
+        accentAlt: '#d9b3ff',
+        text: '#eae6ff',
+        muted: '#73648a',
+        success: '#81c784',
+        error: '#ef5350'
       },
       fontFamily: {
         'fell-english': ['"IM Fell English"']

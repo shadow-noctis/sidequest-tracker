@@ -196,14 +196,14 @@ const deleteVersion = async (ver) => {
     
             {versions.map((ver) => (
               <div key={ver.gameName} className="mb-6">
-                <h4 className="text-xl font-semibold text-accentAlt mb-2 border-b border-accent/50 pb-1">
+                <h4 className="text-xl font-semibold text-accentAlt mb-2 border-b border-accent/30 pb-1">
                   {ver.gameName}
                 </h4>
                 <ul className="space-y-2">
                   {ver.version.map((v) => (
                     <li
                       key={v.id}
-                      className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl border border-solid border-accent/30 shadow-md hover:bg-accent/10 transition"
+                      className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl shadow-md hover:bg-accent/10 transition"
                     >
                       <span className="text-lg font-medium">{v.name}</span>
                       <div className="flex gap-3">

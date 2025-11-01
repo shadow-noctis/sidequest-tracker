@@ -173,17 +173,14 @@ function QuestList() {
    } 
   }, [])
 
-  if (loading) return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-indigo-950 to-black text-gray-100 px-6 py-10">
-      <p className="text-center text-indigo-300">Loading quests...</p>
-    </div>
-  );
+  if (loading) return <p>Loading quests...</p>;
 
 return (
-  <div className="min-h-screen bg-gradient-to-b from-gray-900 via-indigo-950 to-black text-gray-100 px-6 py-10">
+  <div className="px-10">
+
     {/* Version Selector */}
-    <div className="max-w-4xl mx-auto bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-md rounded-2xl shadow-[0_0_25px_rgba(140,90,255,0.4)] p-8 border border-indigo-700/40">
-      <h2 className="text-center text-4xl font-bold text-indigo-300 mb-6 tracking-wide drop-shadow-[0_0_10px_rgba(180,120,255,0.6)]">{gameName}</h2>
+    <div className="mx-auto mt-8 bg-surface/70 border border-accent/20 rounded-2xl shadow-lg shadow-accent/10 p-4">
+      <h2 className="text-center text-3xl text-accent px-4 py-4">{gameName}</h2>
       <div className="flex justify-center gap-2 mb-4">
         {versions.map(v => (
           <button
@@ -195,8 +192,8 @@ return (
               flex-1 px-3 py-2 text-sm sm:text-base tracking-wide font-bold rounded-lg
               border transition-all duration-200
               ${selectedVersion === v.name
-                ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-[0_0_15px_rgba(140,90,255,0.4)]'
-                : 'bg-gray-800/50 text-indigo-100 border-indigo-700/40 hover:border-indigo-600/60 hover:bg-indigo-900/40'}
+                ? 'bg-accentAlt text-background border-accentAlt shadow-lg shadow-accentAlt/30'
+                : 'bg-surface text-accent border-accent/30 hover:border-accent/80 hover:bg-accent/10'}
             `}
           >
             {v.name}
@@ -211,8 +208,8 @@ return (
     className={`
       px-4 py-2 rounded-xl font-semibold transition
       ${allExpanded
-        ? 'bg-gray-700/50 text-gray-400 cursor-not-allowed'
-        : 'bg-indigo-600/80 hover:bg-indigo-600 text-white'}
+        ? 'bg-accent/10 text-muted'
+        : 'bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt'}
     `}
     disabled={allExpanded}
   >
@@ -223,8 +220,8 @@ return (
     className={`
       px-4 py-2 rounded-xl font-semibold transition
       ${!allExpanded
-        ? 'bg-gray-700/50 text-gray-400 cursor-not-allowed'
-        : 'bg-indigo-600/80 hover:bg-indigo-600 text-white'}
+        ? 'bg-accent/10 text-muted'
+        : 'bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt'}
     `}
     disabled={!allExpanded}
   >
@@ -240,16 +237,16 @@ return (
           .map(quest => (
             <li
               key={quest.id}
-              className="bg-gray-800/50 border border-indigo-700/40 rounded-2xl shadow-md hover:shadow-[0_0_15px_rgba(140,90,255,0.3)] overflow-hidden transition-all"
+              className="bg-surface/90 border border-accent/20 rounded-2xl shadow-md shadow-accent/10 overflow-hidden"
             >
               {/* Header: title + status + complete button */}
               <div
                 onClick={() => toggleQuest(quest.id)}
-                className="flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-indigo-900/40 transition-colors"
+                className="flex justify-between items-center px-4 py-3 cursor-pointer hover:bg-accent/10 transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <span className="text-indigo-200 font-semibold text-lg">{quest.title}</span>
-                  <span className="text-gray-400 text-sm">
+                  <span className="text-accentAlt font-semibold text-lg">{quest.title}</span>
+                  <span className="text-muted text-sm">
                     {quest.completed ? '✓ Completed' : '✗ Incomplete'}
                   </span>
                 </div>
@@ -262,14 +259,14 @@ return (
                     }}
                     className={`px-3 py-1 rounded-lg text-sm transition-all ${
                       quest.completed
-                        ? 'bg-green-600/30 text-green-300 hover:bg-green-600/40'
-                        : 'bg-indigo-600/30 text-indigo-200 hover:bg-indigo-600/40'
+                        ? 'bg-success/20 text-success hover:bg-success/30'
+                        : 'bg-accent/20 text-accentAlt hover:bg-accent/30'
                     }`}
                   >
                     {quest.completed ? 'Mark Not Done' : 'Mark Done'}
                   </button>
 
-                  <span className="text-gray-400 text-lg">
+                  <span className="text-muted text-lg">
                     {expandedQuests[quest.id] ? '▲' : '▼'}
                   </span>
                 </div>
@@ -277,7 +274,7 @@ return (
 
               {/* Expanded Details */}
               {expandedQuests[quest.id] && (
-                <div className="px-5 py-4 border-t border-indigo-700/40 bg-gray-800/70 space-y-1 text-sm text-gray-100">
+                <div className="px-5 py-4 border-t border-accent/20 bg-surface/80 space-y-1 text-sm text-text">
                   <p><strong>Description:</strong> {quest.description}</p>
                   <p><strong>Location:</strong> {quest.location}</p>
                   <p><strong>Requirements:</strong> {quest.requirement}</p>
@@ -295,7 +292,7 @@ return (
                           {quest.hint}{' '}
                           <button
                             onClick={() => toggleHint(quest.id)}
-                            className="text-indigo-300 underline hover:text-indigo-200"
+                            className="text-accentAlt underline hover:text-accent"
                           >
                             Hide
                           </button>
@@ -303,7 +300,7 @@ return (
                       ) : (
                         <button
                           onClick={() => toggleHint(quest.id)}
-                          className="text-indigo-300 underline hover:text-indigo-200"
+                          className="text-accentAlt underline hover:text-accent"
                         >
                           Show
                         </button>
@@ -315,13 +312,13 @@ return (
                     <div className="pt-2 space-x-3">
                       <Link
                         to={`/quests/${quest.id}`}
-                        className="text-indigo-300 hover:text-indigo-200 underline"
+                        className="text-accentAlt hover:text-accent underline"
                       >
                         Edit
                       </Link>
                       <button
                         onClick={() => handleDeleteClick(quest)}
-                        className="text-red-400 hover:text-red-300 underline"
+                        className="text-error hover:text-error/80 underline"
                       >
                         Delete
                       </button>
@@ -337,7 +334,7 @@ return (
     {/* Navigation */}
     <div className="text-center mt-6">
       <Link to="/games(quest)">
-        <button className="bg-indigo-600/80 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl font-semibold transition shadow-[0_0_15px_rgba(140,90,255,0.4)]">
+        <button className="bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt px-4 py-2 rounded-xl font-semibold transition">
           Games List
         </button>
       </Link>
