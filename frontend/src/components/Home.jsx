@@ -16,17 +16,36 @@ function Home() {
     }, [location, navigate]);
 
     return (
-        <div className="bg-background text-text text-center py-4">
-            <h1 className="text-4xl font-bold px-4 py-6">QuestLedger</h1>
-            <p className="py-6 md:py-4"><i>Track your sidequests to forge your own story...</i></p>
-            <p className="text-center px-10">
-                Welcome, adventurer!<br />
-                Before setting off to your journey, take with you the QuestLedger and make the most of your path.
-                QuestLedger has all the information you need but never forging your path or telling you what you shouldn't know.
-                Set out for your journey and let QuestLedger make sure you don't stray from the fulfilling path.
-            </p>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background via-[#0b0b15] to-background text-text relative overflow-hidden">
+          {/* Decorative floating particles */}
+          <div className="absolute inset-0 pointer-events-none animate-pulse bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.05)_0%,transparent_70%)]"></div>
+      
+          <h1 className="text-5xl md:text-6xl font-extrabold text-accent drop-shadow-lg tracking-wide mb-4">
+            QuestLedger
+          </h1>
+      
+          <p className="italic text-accentAlt text-lg md:text-xl mb-6">
+            Track your sidequests to forge your own story...
+          </p>
+      
+          <p className="max-w-2xl text-center text-base md:text-lg leading-relaxed px-6">
+            Welcome, adventurer! <br />
+            Before setting off on your journey, take with you the <span className="text-accentAlt font-semibold">QuestLedger</span> — your faithful companion for progress, discovery, and reflection. <br />
+            Record your deeds, revisit your triumphs, and shape your legend.
+          </p>
+      
+          {/* Call-to-action buttons */}
+          <div className="mt-10 flex space-x-4">
+            <button
+              onClick={() => navigate("/games(quest)")}
+              className="bg-accent text-background font-semibold px-6 py-3 rounded-2xl shadow-md hover:shadow-lg hover:scale-105 transition-transform duration-200"
+            >
+              View Quests
+            </button>
+          </div>
         </div>
-    );
+      );
+      
 }
 
 export default Home;

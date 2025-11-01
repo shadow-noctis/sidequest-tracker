@@ -145,86 +145,159 @@ function AddQuest() {
     }, [questForm.versions]);
 
     return(
-        <div>
-            <h1>Add New Quest</h1>
-                {/* 1. Select game */}
-                    <h3>Game:</h3>
-                    <ul>
+        <div className="px-8 py-6 text-text">
+            <h2 className="text-4xl font-bold text-accent mb-6 text-center">Add New Quest</h2>
+            
+            {/* Game Selection */}
+            <section className="bg-surface p-6 rounded-2xl shadow-xl mb-6">
+                <h3 className="text-2xl text-accentAlt font-semibold mb-4">Game</h3>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {allGames.map(g => (
-                            <li key={g.id}>
-                                <label>
-                                    <input name='gameId' type='radio' value={g.id} onChange={handleChange} checked={questForm.gameId == g.id}/>
-                                    {g.name}
-                                </label>
-                            </li>     
+                        <li key={g.id}>
+                            <label className="flex items-center bg-[#0d0b1e] px-4 py-3 rounded-lg hover:bg-accent/10 transition cursor-pointer">
+                                <input 
+                                    name='gameId' 
+                                    type='radio' 
+                                    value={g.id} 
+                                    onChange={handleChange} 
+                                    checked={questForm.gameId == g.id}
+                                    style={{ accentColor: '#8e7cc3' }}
+                                    className="mr-3 cursor-pointer"
+                                />
+                                <span className="text-text font-medium">{g.name}</span>
+                            </label>
+                        </li>     
                     ))}
-                    </ul>
+                </ul>
+            </section>
 
-                {/* 2. Select versions */}
-                {questForm.gameId && (               
-                    <label>
-                        <h3>Versions: </h3>
-                        <ul>
+            {/* Version Selection */}
+            {questForm.gameId && (
+                <section className="bg-surface p-6 rounded-2xl shadow-xl mb-6">
+                    <h3 className="text-2xl text-accentAlt font-semibold mb-4">Versions</h3>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {allVersions.map(v => (
                             <li key={v.id}>
-                                <label>
-                                    <input name="versions" type="checkbox" value={v.id} onChange={handleChecked} checked={questForm.versions.includes(v.id)} />
-                                    {v.name}
+                                <label className="flex items-center bg-[#0d0b1e] px-4 py-3 rounded-lg hover:bg-accent/10 transition cursor-pointer">
+                                    <input 
+                                        name="versions" 
+                                        type="checkbox" 
+                                        value={v.id} 
+                                        onChange={handleChecked} 
+                                        checked={questForm.versions.includes(v.id)}
+                                        style={{ accentColor: '#8e7cc3' }}
+                                        className="mr-3 cursor-pointer"
+                                    />
+                                    <span className="text-text font-medium">{v.name}</span>
                                 </label>
                             </li>
                         ))}
-                        </ul>
-                    </label>)}
-                {/* 3. Fill out necessary fields */}
-                {questForm.versions.length > 0 ? (
-                    <form onSubmit={addNewQuest}>
-                    <h3>Info</h3>
-                <label>
-                    Title:
-                    <input name="title" value={questForm.title} onChange={handleChange} />
-                </label><br />
-                <label>
-                    Description:
-                    <input name="description" value={questForm.description} onChange={handleChange} />
-                </label><br />
-                <label>
-                    Location:
-                    <input name="location" value={questForm.location} onChange={handleChange} />
-                </label><br />
-                <label>
-                    Requirement:
-                    <input name="requirement" value={questForm.requirement} onChange={handleChange} />
-                </label><br />
-                <label>
-                    Missable:
-                    <input type="checkbox" name="missable" value={questForm.missable || false} onChange={handleChange} />
-                </label><br />
-                <label>
-                    Hint:
-                    <input name="hint" value={questForm.hint} onChange={handleChange} />
-                </label><br />
-                    {selectedVer && selectedVer.extras.map(extraName => (
-                    <label key={extraName}>
-                        {extraName}:
-                        <input
-                        name={extraName}
-                        value={questForm.extras?.[extraName] || ""}
-                        onChange={handleExtraChange}
-                        />
-                    </label>
-                    ))}
+                    </ul>
+                </section>
+            )}
 
-                <button type='submit'>Add Quest</button>
-                <button type="button" onClick={resetForm}>Clear</button>
+            {/* Quest Form */}
+            {questForm.versions.length > 0 ? (
+                <section className="bg-surface p-6 rounded-2xl shadow-xl">
+                    <h3 className="text-2xl text-accentAlt font-semibold mb-4">Quest Information</h3>
+                    <form onSubmit={addNewQuest} className="space-y-4">
+                        <label className="block">
+                            <span className="text-muted block mb-1">Title</span>
+                            <input 
+                                name="title" 
+                                value={questForm.title} 
+                                onChange={handleChange}
+                                className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                            />
+                        </label>
+                        
+                        <label className="block">
+                            <span className="text-muted block mb-1">Description</span>
+                            <input 
+                                name="description" 
+                                value={questForm.description} 
+                                onChange={handleChange}
+                                className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                            />
+                        </label>
+                        
+                        <label className="block">
+                            <span className="text-muted block mb-1">Location</span>
+                            <input 
+                                name="location" 
+                                value={questForm.location} 
+                                onChange={handleChange}
+                                className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                            />
+                        </label>
+                        
+                        <label className="block">
+                            <span className="text-muted block mb-1">Requirement</span>
+                            <input 
+                                name="requirement" 
+                                value={questForm.requirement} 
+                                onChange={handleChange}
+                                className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                            />
+                        </label>
+                        
+                        <label className="flex items-center gap-3">
+                            <input 
+                                type="checkbox" 
+                                name="missable" 
+                                value={questForm.missable || false} 
+                                onChange={handleChange}
+                                checked={questForm.missable === 1}
+                                style={{ accentColor: '#8e7cc3' }}
+                                className="w-5 h-5 cursor-pointer"
+                            />
+                            <span className="text-text font-medium">Missable</span>
+                        </label>
+                        
+                        <label className="block">
+                            <span className="text-muted block mb-1">Hint</span>
+                            <input 
+                                name="hint" 
+                                value={questForm.hint} 
+                                onChange={handleChange}
+                                className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                            />
+                        </label>
 
+                        {selectedVer && selectedVer.extras.map(extraName => (
+                            <label key={extraName} className="block">
+                                <span className="text-muted block mb-1">{extraName}</span>
+                                <input
+                                    name={extraName}
+                                    value={questForm.extras?.[extraName] || ""}
+                                    onChange={handleExtraChange}
+                                    className="w-full bg-[#0d0b1e] border border-accent/30 rounded-xl px-3 py-2 text-text focus:border-accent outline-none transition"
+                                />
+                            </label>
+                        ))}
 
-            </form>
-                ) : ("Select game and version")}
-
-            <p>Current choices: <br /> title: {questForm.title}<br /> description {questForm.description}<br /> location: {questForm.location}<br />
-                requirement: {questForm.requirement}<br /> missable:{questForm.missable}<br /> hint: {questForm.hint}<br /> game ID:{questForm.gameId}<br />
-                versions: {questForm.versions}<br />
-            </p>
+                        <div className="flex gap-4 mt-6">
+                            <button 
+                                type='submit'
+                                className="bg-accent hover:bg-accentAlt text-[#0d0b1e] font-semibold px-6 py-2 rounded-xl shadow-lg transition"
+                            >
+                                Add Quest
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={resetForm}
+                                className="bg-surface hover:bg-accent/10 text-accent border border-accent/30 font-semibold px-6 py-2 rounded-xl transition"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            ) : (
+                <div className="bg-surface/60 p-8 rounded-2xl shadow-xl text-center">
+                    <p className="text-muted text-lg">Please select a game and version to continue</p>
+                </div>
+            )}
         </div>
     );
     }

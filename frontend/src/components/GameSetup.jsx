@@ -32,34 +32,67 @@ function GameSetup() {
         };
 
     return(
-        <div>
-            <div>
+        <div className="px-10">
+            <div className="mx-auto mt-8 bg-surface/70 border border-accent/20 rounded-2xl shadow-lg shadow-accent/10 p-4">
+            <h2 className="text-4xl font-bold text-accent mb-6 text-center">Game Setup</h2>
+            
+            {/* Navigation Tabs */}
+            <div className="flex justify-center gap-2 mb-4">
                 <button
-                    onClick={() => setOpenSection("games")} style={{
-                    fontWeight: openSection === "games" ? "bold" : "normal"
-                    }}>
-                        Games
+                    onClick={() => setOpenSection("games")}
+                    className={`
+                        flex-1 px-3 py-2 text-sm sm:text-base tracking-wide font-bold rounded-lg
+                        border transition-all duration-200
+                        ${openSection === "games"
+                            ? 'bg-accentAlt text-background shadow-lg shadow-accentAlt/30 border-accentAlt'
+                            : 'bg-surface text-accent border-accent/30 hover:border-accent/80 hover:bg-accent/10'}
+                    `}
+                >
+                    Games
                 </button>
                 <button
-                    onClick={() => setOpenSection("versions")} style={{
-                    fontWeight: openSection === "versions" ? "bold" : "normal"
-                    }}>
-                        Versions
+                    onClick={() => setOpenSection("achievements")}
+                    className={`
+                        flex-1 px-3 py-2 text-sm sm:text-base tracking-wide font-bold rounded-lg
+                        border transition-all duration-200
+                        ${openSection === "achievements"
+                            ? 'bg-accentAlt text-background shadow-lg shadow-accentAlt/30 border-accentAlt'
+                            : 'bg-surface text-accent border-accent/30 hover:border-accent/80 hover:bg-accent/10'}
+                    `}
+                >
+                    Achievements
                 </button>
                 <button
-                    onClick={() => setOpenSection("platforms")} style={{
-                    fontWeight: openSection === "platforms" ? "bold" : "normal"
-                    }}>
-                        Platforms
+                    onClick={() => setOpenSection("versions")}
+                    className={`
+                        flex-1 px-3 py-2 text-sm sm:text-base tracking-wide font-bold rounded-lg
+                        border transition-all duration-200
+                        ${openSection === "versions"
+                            ? 'bg-accentAlt text-background shadow-lg shadow-accentAlt/30 border-accentAlt'
+                            : 'bg-surface text-accent border-accent/30 hover:border-accent/80 hover:bg-accent/10'}
+                    `}
+                >
+                    Versions
                 </button>
                 <button
-                    onClick={() => setOpenSection("achievements")} style={{
-                    fontWeight: openSection === "achievements" ? "bold" : "normal"
-                    }}>
-                        Achievements
+                    onClick={() => setOpenSection("platforms")}
+                    className={`
+                        flex-1 px-3 py-2 text-sm sm:text-base tracking-wide font-bold rounded-lg
+                        border transition-all duration-200
+                        ${openSection === "platforms"
+                            ? 'bg-accentAlt text-background shadow-lg shadow-accentAlt/30 border-accentAlt'
+                            : 'bg-surface text-accent border-accent/30 hover:border-accent/80 hover:bg-accent/10'}
+                    `}
+                >
+                    Platforms
                 </button>
             </div>
-            {renderSection()}
+            
+            {/* Section Content */}
+            <div className="mt-6">
+                {renderSection()}
+                </div>
+            </div>
         </div>
     )
 

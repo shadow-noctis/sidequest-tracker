@@ -117,7 +117,7 @@ function PlatformManager() {
                 <ul className="space-y-2">
                     {allPlatforms.map(platform => (
                         <li key={platform.id}
-                            className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl shadow-md hover:bg-accent/10 transition">
+                            className="flex items-center justify-between bg-surface px-4 py-3 border border-accent/30 rounded-xl shadow-md hover:bg-accent/10 transition">
                             <span className="text-lg font-medium">{platform.name}</span>
                             {user?.role === 'admin' && (<button onClick={() => handleDeleteClick(platform)}
                                 className="text-error hover:text-error/80 transition font-semibold">

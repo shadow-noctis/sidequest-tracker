@@ -203,7 +203,7 @@ const deleteVersion = async (ver) => {
                   {ver.version.map((v) => (
                     <li
                       key={v.id}
-                      className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl shadow-md hover:bg-accent/10 transition"
+                      className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl border border-accent/30 ashadow-md hover:bg-accent/10 transition"
                     >
                       <span className="text-lg font-medium">{v.name}</span>
                       <div className="flex gap-3">
