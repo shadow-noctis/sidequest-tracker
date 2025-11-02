@@ -132,8 +132,9 @@ function QuestList() {
     })
       .then(res => res.json())
       .then(data => {
-        setQuests(data);
         console.log("Quests: ", data);
+        const sortedQuests = data.sort((a, b) => a.title.localeCompare(b.title));
+        setQuests(sortedQuests);
         setLoading(false);
       })
       .catch(err => {

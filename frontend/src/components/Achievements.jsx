@@ -96,14 +96,14 @@ function AchievementsList() {
 
   // Fetch achievements
   useEffect(() => {
-    console.log("Fetching achievements...")
     fetch(`http://localhost:3001/api/games/${gameId}/achievements`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
       .then(data => {
-        setAchievements(data);
         console.log("Achievements: ", data);
+        const sortedAchievements = data.sort((a, b) => a.name.localeCompare(b.name));
+        setAchievements(sortedAchievements);
         setLoading(false);
       })
       .catch(err => {
