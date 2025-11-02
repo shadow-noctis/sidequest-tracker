@@ -381,43 +381,57 @@ app.get('/api/quests/:questId', (req, res) => {
 app.get('/api/achievements', (req, res) => {
   try {
     const achievements = db.prepare(`
-        SELECT g.name as gameName,
-              json_group_array(
-                DISTINCT json_object(
-                  'id', a.id,
-                  'name', a.name,
-                  'description', a.description,
-                  'warning', a.warning,
-                  'requires', a.requires,
-                  'gameId', a.game_id,
-                  'versions', (
-                    SELECT json_group_array(
-                      json_object('id', v.id, 'name', v.name)
-                    )
-                    FROM achievement_version av
-                    JOIN versions v ON av.version_id = v.id
-                    WHERE av.achievement_id = a.id
-                  )
+      SELECT 
+        g.name AS gameName,
+        COALESCE(
+          json_group_array(
+            json_object(
+              'id', a.id,
+              'name', a.name,
+              'description', a.description,
+              'warning', a.warning,
+              'requires', a.requires,
+              'gameId', a.game_id,
+              'versions', COALESCE((
+                SELECT json_group_array(
+                  json_object('id', v.id, 'name', v.name)
                 )
-              ) as achievements
-        FROM games g
-        JOIN achievements a ON g.id = a.game_id
-        GROUP BY g.name;
-      `).all();
+                FROM achievement_version av
+                JOIN versions v ON av.version_id = v.id
+                WHERE av.achievement_id = a.id
+              ), '[]')
+            )
+          ), '[]'
+        ) AS achievements
+      FROM games g
+      JOIN achievements a ON g.id = a.game_id
+      GROUP BY g.name
+    `).all();
+
     const parsedAchievements = achievements.map(game => {
-      const parsedAchievementArr = game.achievements ? JSON.parse(game.achievements) : [];
+      let parsedAchievementArr = [];
+      try {
+        parsedAchievementArr = JSON.parse(game.achievements || '[]');
+      } catch (e) {
+        console.error("Failed to parse achievements for game", game.gameName, e);
+      }
+
       const achievementsWithVersions = parsedAchievementArr.map(ach => ({
         ...ach,
-        versions: ach.versions ? JSON.parse(ach.versions) : []
+        versions: ach.versions || []  // ✅ fixed line
       }));
-      return {...game, achievements: achievementsWithVersions};
+
+      return { ...game, achievements: achievementsWithVersions };
     });
-    res.json(parsedAchievements || []);
+
+    res.json(parsedAchievements);
   } catch (err) {
     console.error("Error getting achievements: ", err);
     res.status(500).json({ error: err.message });
   }
 });
+
+  
 
 app.get("/api/dummytest", (req, res) => {
   console.log("dummytest hit");

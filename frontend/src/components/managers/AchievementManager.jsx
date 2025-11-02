@@ -22,7 +22,6 @@ function AchievementManager() {
     const [achievements, setAchievements] = useState([]);
     const [allPlatforms, setAllPlatforms] = useState([]);
     const [games, setGames] = useState([])
-    const [versions, setVersions] = useState([])
 
     // Achievement values
     const initialForm = {
@@ -31,8 +30,7 @@ function AchievementManager() {
         warning: "",
         requires: "",
         gameId: null,
-        platforms: [],
-        versions: []
+        platforms: []
     }
     const [achievementForm, setAchievementForm] = useState(initialForm)
 
@@ -48,10 +46,6 @@ function AchievementManager() {
         e.preventDefault();
         if (!achievementForm.platforms || achievementForm.platforms.length === 0) {
             alert("Please select at least one platform")
-            return;
-        }
-        if (!achievementForm.versions || achievementForm.versions.length === 0) {
-            alert("Please select at least one version")
             return;
         }
         try{
@@ -81,18 +75,10 @@ function AchievementManager() {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        if (name === "gameId") {
-            setAchievementForm((prev) => ({
-                ...prev,
-                [name]: value ? Number(value) : null,
-                versions: [] // Reset versions when game changes
-            }));
-        } else {
-            setAchievementForm((prev) => ({
-                ...prev,
-                [name]: value,
-            }));
-        }
+        setAchievementForm((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
     };
 
     const resetForm = () => {
@@ -134,6 +120,7 @@ function AchievementManager() {
         .then(gameres => gameres.json())
         .then(data => {
             setGames(data)
+            console.log("Games: ", data)
         });
     };
 
@@ -143,6 +130,7 @@ function AchievementManager() {
         .then(res => res.json())
         .then(data => {
             setAllPlatforms(data)
+            console.log("Platforms: ", data)
         });
     };
 
@@ -152,19 +140,6 @@ function AchievementManager() {
         fetchAchievements();
         fetchPlatforms();
     }, [])
-
-    // Fetch versions when gameId changes
-    useEffect(() => {
-        if (achievementForm.gameId) {
-            fetch(`http://localhost:3001/api/versions/${achievementForm.gameId}`)
-                .then(res => res.json())
-                .then(data => {
-                    setVersions(data)
-                });
-        } else {
-            setVersions([])
-        }
-    }, [achievementForm.gameId])
 
     return (
         <div id="achievement-manager" className="px-8 py-6 text-text">
@@ -310,30 +285,6 @@ function AchievementManager() {
                     ))}
                   </ul>
                 </div>
-
-                {achievementForm.gameId && (
-                  <div>
-                    <span className="text-muted block mb-1">Versions</span>
-                    <ul className="grid gap-2">
-                      {versions.map((v) => (
-                        <li
-                          key={v.id}
-                          className="flex items-center bg-[#1a1633] px-3 py-2 rounded-lg hover:bg-accent/10"
-                        >
-                          <input
-                            type="checkbox"
-                            value={v.id}
-                            name="versions"
-                            onChange={handleChecked}
-                            checked={achievementForm.versions.includes(v.id)}
-                            className="mr-2 accent-accent"
-                          />
-                          <label>{v.name}</label>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
     
               <div className="col-span-2 mt-4 text-center">
