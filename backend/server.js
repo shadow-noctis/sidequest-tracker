@@ -530,6 +530,55 @@ app.put('/api/achievements/:id', authenticateToken, requireRole('admin'), (req, 
   }
 });
 
+// Import achievements
+app.post("/api/import-achievements", authenticateToken, requireRole('admin'), async (req, res) => {
+  let { achievements } = req.body;
+  achievements = achievements.achievements;
+  console.log(achievements);
+
+  try {
+    // Start transaction
+    db.exec("BEGIN TRANSACTION");
+
+    const achievementStmt = db.prepare(`
+      INSERT INTO achievements (game_id, name, requires, description, warning)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const apStmt = db.prepare(`
+      INSERT INTO achievement_platform (achievement_id, platform_id)
+      VALUES (?, ?)
+    `);
+
+    for (const achievement of achievements) {
+      // Insert achievement
+      const achievementResult = achievementStmt.run(
+        achievement.gameId,
+        achievement.name,
+        achievement.requires,
+        achievement.description || null,
+        achievement.warning || null
+      );
+
+      // Insert related platforms
+      if (achievement.platforms && achievement.platforms.length > 0) {
+        for (const platformId of achievement.platforms) {
+          apStmt.run(achievementResult.lastInsertRowid, platformId);
+        }
+      }
+    }
+
+    // Commit transaction
+    db.exec("COMMIT");
+
+    res.json({ message: "Achievements imported successfully", count: achievements.length });
+  } catch (err) {
+    console.error("Error importing achievements: ", err);
+    db.exec("ROLLBACK"); // rollback if anything fails
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get completed quests
 app.get('/api/user/quests', authenticateToken, (req, res) => {
     const userId = req.user.id;
@@ -570,6 +619,57 @@ app.post('/api/quests', authenticateToken, requireRole('admin'), (req, res) => {
       res.status(500).json({ error: err.message })
     }
   });
+
+// import quests 
+app.post("/api/import-quests", async (req, res) => {
+  let { quests } = req.body;
+  quests =  quests.quests
+  console.log(quests)
+
+  try {
+    // Start transaction
+    db.exec("BEGIN TRANSACTION");
+
+    const questStmt = db.prepare(`
+      INSERT INTO quests (game_id, title, description, requirement, location, missable, hint, extras)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const qvStmt = db.prepare(`
+      INSERT INTO quest_version (quest_id, version_id)
+      VALUES (?, ?)
+    `);
+
+    for (const quest of quests) {
+      // Insert quest
+      const questResult = questStmt.run(
+        quest.gameId,
+        quest.title,
+        quest.description,
+        quest.requirement,
+        quest.location,
+        quest.missable,
+        quest.hint,
+        quest.extras ? JSON.stringify(quest.extras) : null
+      );
+
+      // Insert related versions
+      for (const vId of quest.versions) {
+        qvStmt.run(questResult.lastInsertRowid, vId);
+      }
+    }
+
+    // Commit transaction
+    db.exec("COMMIT");
+
+    res.json({ message: "Quests imported successfully", count: quests.length });
+  } catch (err) {
+    console.error("Error importing quests: ", err);
+    db.exec("ROLLBACK"); // rollback if anything fails
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // Update quest
 app.put('/api/quests/:id', authenticateToken, requireRole('admin'), (req, res) => {

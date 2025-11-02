@@ -34,3 +34,6 @@ backend/data
 
 # For Debugging.
 old_server.js
+
+# Local JSON files
+quests.json

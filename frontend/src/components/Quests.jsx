@@ -202,32 +202,32 @@ return (
         ))}
       </div>
 
-{/* Expand / Collapse Controls */}
-<div className="flex justify-center gap-4 mb-6">
-  <button
-    onClick={expandAll}
-    className={`
-      px-4 py-2 rounded-xl font-semibold transition
-      ${allExpanded
-        ? 'bg-accent/10 text-muted'
-        : 'bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt'}
-    `}
-    disabled={allExpanded}
-  >
-    Expand All
-  </button>
-  <button
-    onClick={collapseAll}
-    className={`
-      px-4 py-2 rounded-xl font-semibold transition
-      ${!allExpanded
-        ? 'bg-accent/10 text-muted'
-        : 'bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt'}
-    `}
-    disabled={!allExpanded}
-  >
-    Collapse All
-  </button>
+      {/* Expand / Collapse Controls */}
+      <div className="flex justify-center gap-4 mb-6">
+        <button
+          onClick={expandAll}
+          className={`
+            px-4 py-2 rounded-xl font-semibold transition
+            ${allExpanded
+              ? 'bg-accent/10 text-muted'
+              : 'bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt'}
+          `}
+          disabled={allExpanded}
+        >
+          Expand All
+        </button>
+        <button
+          onClick={collapseAll}
+          className={`
+            px-4 py-2 rounded-xl font-semibold transition
+            ${!allExpanded
+              ? 'bg-accent/10 text-muted'
+              : 'bg-accentAlt/20 hover:bg-accentAlt/30 text-accentAlt'}
+          `}
+          disabled={!allExpanded}
+        >
+          Collapse All
+        </button>
 </div>
 
 

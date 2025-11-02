@@ -10,7 +10,7 @@ export default {
         accentAlt: '#d9b3ff',
         text: '#eae6ff',
         muted: '#73648a',
-        success: '#81c784',
+        success: '#9bd7b7',
         error: '#ef5350'
       },
       fontFamily: {

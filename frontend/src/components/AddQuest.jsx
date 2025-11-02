@@ -1,5 +1,7 @@
 import React, { useState, useEffect} from 'react'
 import { toast } from 'react-toastify'
+import ImportQuests from './ImportQuests'
+
 
 function AddQuest() {
 
@@ -298,6 +300,9 @@ function AddQuest() {
                     <p className="text-muted text-lg">Please select a game and version to continue</p>
                 </div>
             )}
+            <div>
+                <ImportQuests />
+            </div>
         </div>
     );
     }

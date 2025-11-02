@@ -5,6 +5,8 @@ import { AuthContext } from '../AuthContext';
 import DeleteModal from '../DeleteModal'
 import ConfirmModal from '../ConfirmModal'
 import EditAchievement from '../edit/EditAchievements';
+import ImportAchievements from '../ImportAchievements';
+
 
 function AchievementManager() {
 
@@ -276,6 +278,21 @@ function AchievementManager() {
                 </button>
               </div>
             </form>
+          </section>
+
+          {/* Separator */}
+          <div className="flex items-center my-8">
+            <div className="flex-grow border-t border-accent/30"></div>
+            <span className="px-4 text-muted font-medium">OR</span>
+            <div className="flex-grow border-t border-accent/30"></div>
+          </div>
+
+          {/* Import Achievements Section */}
+          <section className="bg-surface p-6 rounded-2xl shadow-xl">
+            <h3 className="text-2xl text-accentAlt font-semibold mb-4">
+              Import Achievements
+            </h3>
+            <ImportAchievements />
           </section>
         </div>
       )
