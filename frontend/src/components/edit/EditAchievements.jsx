@@ -7,6 +7,7 @@ function EditAchievement() {
     const [achievement, setAchievement] = useState(null);
 
     const [platforms, setPlatforms] = useState([])
+    const [versions, setVersions] = useState([])
 
     const { achievementId } = useParams();
     const navigate = useNavigate();
@@ -16,7 +17,8 @@ function EditAchievement() {
         warning: "",
         requries: "",
         gameId: "",
-        platforms: []
+        platforms: [],
+        versions: []
     });
 
     useEffect(() => {
@@ -33,17 +35,36 @@ function EditAchievement() {
                     warning: data.warning,
                     requires: data.requires,
                     gameId: data.game_id,
-                    platforms: data.platforms.map(p => p.id)
+                    platforms: data.platforms ? data.platforms.map(p => p.id) : [],
+                    versions: data.versions ? data.versions.map(v => v.id) : []
                 });
             });
     }, [achievementId]);
 
+    useEffect(() => {
+        if (achievementForm.gameId) {
+            fetch(`http://localhost:3001/api/versions/${achievementForm.gameId}`)
+                .then((res) => res.json())
+                .then((data) => {
+                    setVersions(data)
+                });
+        }
+    }, [achievementForm.gameId]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setAchievementForm((prev) =>({
-            ...prev,
-            [name]: value,
-        }));
+        if (name === "gameId") {
+            setAchievementForm((prev) => ({
+                ...prev,
+                [name]: value ? Number(value) : null,
+                versions: [] // Reset versions when game changes
+            }));
+        } else {
+            setAchievementForm((prev) =>({
+                ...prev,
+                [name]: value,
+            }));
+        }
     };
 
     const handleChecked = (e) => {
@@ -132,7 +153,21 @@ function EditAchievement() {
                             ))}
                         </ul>
                     </label>
-                    <p>Name: {achievementForm.name}<br />Platforms:{achievementForm.platforms}</p>
+                    {achievementForm.gameId && (
+                        <label>
+                            Versions:
+                            <ul>
+                                {versions.map(v => (
+                                    <li key={v.id}>
+                                        <label>
+                                            <input name='versions' type='checkbox' value={v.id} onChange={handleChecked} checked={achievementForm.versions.includes(v.id)} />
+                                            {v.name}</label>
+                                    </li>
+                                ))}
+                            </ul>
+                        </label>
+                    )}
+                    <p>Name: {achievementForm.name}<br />Platforms:{achievementForm.platforms}<br />Versions:{achievementForm.versions}</p>
                     <button type='submit'>Save Changes</button>
                     <button type='button'><Link to={`/game-setup`} state={{ openSection: 'achievements'}}>Return</Link></button>
 

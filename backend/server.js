@@ -112,6 +112,14 @@ db.exec(`
     FOREIGN KEY (platform_id) REFERENCES platforms(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS achievement_version (
+    achievement_id INTEGER,
+    version_id INTEGER,
+    PRIMARY KEY (achievement_id, version_id),
+    FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE,
+    FOREIGN KEY (version_id) REFERENCES versions(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS user_achievement (
     user_id INTEGER,
     achievement_id INTEGER,
@@ -369,12 +377,44 @@ app.get('/api/quests/:questId', (req, res) => {
   }
 })
 
-// Get all achievements
+// Get all achievements, grouped by gameName
 app.get('/api/achievements', (req, res) => {
   try {
-    const achievements = db.prepare('SELECT * FROM achievements').all();
-    res.json(achievements);
+    const achievements = db.prepare(`
+        SELECT g.name as gameName,
+              json_group_array(
+                DISTINCT json_object(
+                  'id', a.id,
+                  'name', a.name,
+                  'description', a.description,
+                  'warning', a.warning,
+                  'requires', a.requires,
+                  'gameId', a.game_id,
+                  'versions', (
+                    SELECT json_group_array(
+                      json_object('id', v.id, 'name', v.name)
+                    )
+                    FROM achievement_version av
+                    JOIN versions v ON av.version_id = v.id
+                    WHERE av.achievement_id = a.id
+                  )
+                )
+              ) as achievements
+        FROM games g
+        JOIN achievements a ON g.id = a.game_id
+        GROUP BY g.name;
+      `).all();
+    const parsedAchievements = achievements.map(game => {
+      const parsedAchievementArr = game.achievements ? JSON.parse(game.achievements) : [];
+      const achievementsWithVersions = parsedAchievementArr.map(ach => ({
+        ...ach,
+        versions: ach.versions ? JSON.parse(ach.versions) : []
+      }));
+      return {...game, achievements: achievementsWithVersions};
+    });
+    res.json(parsedAchievements || []);
   } catch (err) {
+    console.error("Error getting achievements: ", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -392,16 +432,25 @@ app.get('/api/achievements/:achievementId', (req, res) => {
     const achievement = db.prepare(`
       SELECT a.*,
       json_group_array(
-        json_object('id', p.id, 'name', p.name)
-      ) as platforms
+        DISTINCT json_object('id', p.id, 'name', p.name)
+      ) as platforms,
+      json_group_array(
+        DISTINCT json_object('id', v.id, 'name', v.name)
+      ) as versions
       FROM achievements a
       LEFT JOIN achievement_platform ap ON a.id = ap.achievement_id
       LEFT JOIN platforms p ON ap.platform_id = p.id
+      LEFT JOIN achievement_version av ON a.id = av.achievement_id
+      LEFT JOIN versions v ON av.version_id = v.id
       WHERE a.id = ?
       GROUP BY a.id
       `).get(achievementId)
 
-      res.json({...achievement, platforms : JSON.parse(achievement.platforms)});
+      res.json({
+        ...achievement, 
+        platforms: JSON.parse(achievement.platforms),
+        versions: JSON.parse(achievement.versions)
+      });
   } catch(err) {
     console.error('Error fetching achievement', err)
     res.status(500).json({ error: err.message})
@@ -434,18 +483,26 @@ app.get('/api/games/:gameId/achievements', (req, res) => {
       ELSE IFNULL(ua.achieved, 0)
     END AS achieved,
     json_group_array(
-      json_object('id', p.id, 'name', p.name)
-      ) as platforms
+      DISTINCT json_object('id', p.id, 'name', p.name)
+      ) as platforms,
+    json_group_array(
+      DISTINCT json_object('id', v.id, 'name', v.name)
+      ) as versions
     FROM achievements a
     LEFT JOIN achievement_platform ap ON a.id = ap.achievement_id
     LEFT JOIN platforms p ON ap.platform_id = p.id
+    LEFT JOIN achievement_version av ON a.id = av.achievement_id
+    LEFT JOIN versions v ON av.version_id = v.id
     LEFT JOIN user_achievement ua
           ON a.id = ua.achievement_id AND ua.user_id = ?
     WHERE a.game_id = ?
     GROUP BY a.id
       `).all(userId, userId, gameId);
       const parsedAchievements = achievements.map(achievement => ({
-        ...achievement, platforms: JSON.parse(achievement.platforms), achieved: !!achievement.achieved 
+        ...achievement, 
+        platforms: JSON.parse(achievement.platforms), 
+        versions: JSON.parse(achievement.versions),
+        achieved: !!achievement.achieved 
       }));
       res.json(parsedAchievements);
   } catch (err) {
@@ -456,10 +513,14 @@ app.get('/api/games/:gameId/achievements', (req, res) => {
 
 // Add achievement
 app.post('/api/achievements', authenticateToken, requireRole('admin'), (req, res) => {
-  const { name, requires, description, warning, gameId, platforms } = req.body;
+  const { name, requires, description, warning, gameId, platforms, versions } = req.body;
 
   if (!platforms || platforms.length === 0) {
     return res.status(400).json({ error: "At least one platform must be selected." });
+    }
+
+  if (!versions || versions.length === 0) {
+    return res.status(400).json({ error: "At least one version must be selected." });
     }
 
   try{
@@ -474,6 +535,12 @@ app.post('/api/achievements', authenticateToken, requireRole('admin'), (req, res
       VALUES (?, ?)
       `);
       platforms.forEach(pid => apStmt.run(achievement.lastInsertRowid, pid))
+
+    const avStmt = db.prepare(`
+      INSERT INTO achievement_version (achievement_id, version_id)
+      VALUES (?, ?)
+      `);
+      versions.forEach(vid => avStmt.run(achievement.lastInsertRowid, vid))
 
       res.status(201).json({ id: achievement.lastInsertRowid, message: 'Achievement added succesfully '})
 
@@ -507,9 +574,9 @@ app.post('/api/achievements/:id/achieved', authenticateToken, (req, res) => {
 //Update Achievement
 app.put('/api/achievements/:id', authenticateToken, requireRole('admin'), (req, res) => {
   const { id } = req.params
-  const { name, requires, description, warning, gameId, platforms } = req.body;
+  const { name, requires, description, warning, gameId, platforms, versions } = req.body;
   try{
-    //Delete all connections of the game from game_platform table
+    //Delete all connections of the achievement from achievement_platform table
     const platformDelStmt = db.prepare(`DELETE FROM achievement_platform WHERE achievement_id = ?`).run(id);
 
     const platformInsertStmt = db.prepare(`
@@ -517,6 +584,15 @@ app.put('/api/achievements/:id', authenticateToken, requireRole('admin'), (req, 
       VALUES (?, ?)
       `);
       platforms.forEach(pid => platformInsertStmt.run(id, pid));
+
+    //Delete all connections of the achievement from achievement_version table
+    const versionDelStmt = db.prepare(`DELETE FROM achievement_version WHERE achievement_id = ?`).run(id);
+
+    const versionInsertStmt = db.prepare(`
+      INSERT INTO achievement_version (achievement_id, version_id)
+      VALUES (?, ?)
+      `);
+      versions.forEach(vid => versionInsertStmt.run(id, vid));
 
     const updateStmt = db.prepare(`
       UPDATE achievements
@@ -550,6 +626,11 @@ app.post("/api/import-achievements", authenticateToken, requireRole('admin'), as
       VALUES (?, ?)
     `);
 
+    const avStmt = db.prepare(`
+      INSERT INTO achievement_version (achievement_id, version_id)
+      VALUES (?, ?)
+    `);
+
     for (const achievement of achievements) {
       // Insert achievement
       const achievementResult = achievementStmt.run(
@@ -564,6 +645,13 @@ app.post("/api/import-achievements", authenticateToken, requireRole('admin'), as
       if (achievement.platforms && achievement.platforms.length > 0) {
         for (const platformId of achievement.platforms) {
           apStmt.run(achievementResult.lastInsertRowid, platformId);
+        }
+      }
+
+      // Insert related versions
+      if (achievement.versions && achievement.versions.length > 0) {
+        for (const versionId of achievement.versions) {
+          avStmt.run(achievementResult.lastInsertRowid, versionId);
         }
       }
     }

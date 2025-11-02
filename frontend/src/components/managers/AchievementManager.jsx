@@ -22,6 +22,7 @@ function AchievementManager() {
     const [achievements, setAchievements] = useState([]);
     const [allPlatforms, setAllPlatforms] = useState([]);
     const [games, setGames] = useState([])
+    const [versions, setVersions] = useState([])
 
     // Achievement values
     const initialForm = {
@@ -30,7 +31,8 @@ function AchievementManager() {
         warning: "",
         requires: "",
         gameId: null,
-        platforms: []
+        platforms: [],
+        versions: []
     }
     const [achievementForm, setAchievementForm] = useState(initialForm)
 
@@ -46,6 +48,10 @@ function AchievementManager() {
         e.preventDefault();
         if (!achievementForm.platforms || achievementForm.platforms.length === 0) {
             alert("Please select at least one platform")
+            return;
+        }
+        if (!achievementForm.versions || achievementForm.versions.length === 0) {
+            alert("Please select at least one version")
             return;
         }
         try{
@@ -75,10 +81,18 @@ function AchievementManager() {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        setAchievementForm((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+        if (name === "gameId") {
+            setAchievementForm((prev) => ({
+                ...prev,
+                [name]: value ? Number(value) : null,
+                versions: [] // Reset versions when game changes
+            }));
+        } else {
+            setAchievementForm((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
+        }
     };
 
     const resetForm = () => {
@@ -139,6 +153,19 @@ function AchievementManager() {
         fetchPlatforms();
     }, [])
 
+    // Fetch versions when gameId changes
+    useEffect(() => {
+        if (achievementForm.gameId) {
+            fetch(`http://localhost:3001/api/versions/${achievementForm.gameId}`)
+                .then(res => res.json())
+                .then(data => {
+                    setVersions(data)
+                });
+        } else {
+            setVersions([])
+        }
+    }, [achievementForm.gameId])
+
     return (
         <div id="achievement-manager" className="px-8 py-6 text-text">
           <h2 className="text-4xl font-bold text-accent mb-6 text-center">
@@ -150,24 +177,40 @@ function AchievementManager() {
             <h3 className="text-2xl text-accentAlt font-semibold mb-4">
               Existing Achievements
             </h3>
-            <ul className="space-y-2">
-              {achievements.map((a) => (
-                <li
-                  key={a.id}
-                  className="flex items-center justify-between bg-surface px-4 py-2 rounded-xl border border-accent/30 shadow-md hover:bg-accent/10 transition"
-                >
-                  <span className="text-lg">{a.name}</span>
-                  {user?.role === 'admin' && (
-                    <Link
-                      to={`/achievements/${a.id}`}
-                      className="text-accentAlt hover:text-accent font-medium"
-                    >
-                      Edit
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
+
+            {achievements && achievements.length > 0 ? (
+              achievements.map((game) => (
+                <div key={game.gameName} className="mb-6">
+                  <h4 className="text-xl font-semibold text-accentAlt mb-2 border-b border-accent/30 pb-1">
+                    {game.gameName}
+                  </h4>
+                  <ul className="space-y-2">
+                    {game.achievements && game.achievements.length > 0 ? (
+                      game.achievements.map((a) => (
+                        <li
+                          key={a.id}
+                          className="flex items-center justify-between bg-surface px-4 py-3 rounded-xl border border-accent/30 shadow-md hover:bg-accent/10 transition"
+                        >
+                          <span className="text-lg font-medium">{a.name}</span>
+                          {user?.role === 'admin' && (
+                            <Link
+                              to={`/achievements/${a.id}`}
+                              className="text-accentAlt hover:text-accent font-medium"
+                            >
+                              Edit
+                            </Link>
+                          )}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-muted">No achievements for this game</li>
+                    )}
+                  </ul>
+                </div>
+              ))
+            ) : (
+              <p className="text-muted">No achievements found</p>
+            )}
           </section>
     
           {/* Add Achievement Form */}
@@ -267,6 +310,30 @@ function AchievementManager() {
                     ))}
                   </ul>
                 </div>
+
+                {achievementForm.gameId && (
+                  <div>
+                    <span className="text-muted block mb-1">Versions</span>
+                    <ul className="grid gap-2">
+                      {versions.map((v) => (
+                        <li
+                          key={v.id}
+                          className="flex items-center bg-[#1a1633] px-3 py-2 rounded-lg hover:bg-accent/10"
+                        >
+                          <input
+                            type="checkbox"
+                            value={v.id}
+                            name="versions"
+                            onChange={handleChecked}
+                            checked={achievementForm.versions.includes(v.id)}
+                            className="mr-2 accent-accent"
+                          />
+                          <label>{v.name}</label>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
     
               <div className="col-span-2 mt-4 text-center">

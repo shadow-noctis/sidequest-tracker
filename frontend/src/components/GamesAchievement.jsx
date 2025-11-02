@@ -12,6 +12,7 @@ function GamesAchievement() {
         .then(data => {
             setGames(data)
             setLoading(false)
+            console.log(data)
         })
         .catch(err => {
             console.error('Error fetching games:', err);

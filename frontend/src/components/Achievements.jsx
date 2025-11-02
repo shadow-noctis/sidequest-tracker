@@ -15,7 +15,11 @@ function AchievementsList() {
   
   const [expandedAchievements, setExpandedAchievements] = useState({});
 
-  // Versions related to game and currently selected platform to show
+  // Versions related to game and currently selected version to show
+  const [versions, setVersions] = useState([]);
+  const [selectedVersion, setSelectedVersion] = useState(null);
+
+  // Platforms related to game and currently selected platform to show
   const [platforms, setPlatforms] = useState([]);
   const [selectedPlatform, setSelectedPlatform] = useState(null);
 
@@ -62,7 +66,12 @@ function AchievementsList() {
     }));
   };
 
-  const handleClick = (e) => {
+  const handleVersionClick = (e) => {
+      const { value } = e.target;
+      setSelectedVersion(value);    
+    }
+
+  const handlePlatformClick = (e) => {
       const { value } = e.target;
       setSelectedPlatform(value);    
     }
@@ -102,7 +111,18 @@ function AchievementsList() {
       .then(res => res.json())
       .then(data => {
         console.log("Achievements: ", data);
-        const sortedAchievements = data.sort((a, b) => a.name.localeCompare(b.name));
+        // Filter out null platform values and ensure platforms is an array
+        const processedData = data.map(a => {
+          const platforms = Array.isArray(a.platforms) 
+            ? a.platforms.filter(p => p && p.id && p.name)
+            : [];
+          console.log(`Achievement ${a.id} (${a.name}) platforms:`, platforms);
+          return {
+            ...a,
+            platforms
+          };
+        });
+        const sortedAchievements = processedData.sort((a, b) => a.name.localeCompare(b.name));
         setAchievements(sortedAchievements);
         setLoading(false);
       })
@@ -113,20 +133,35 @@ function AchievementsList() {
   }, [gameId, token, showModal]);
 
 
+  // Get versions
+  useEffect(() => {
+    fetch(`http://localhost:3001/api/versions/${gameId}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("Versions:", data)
+      setSelectedVersion(data[0]?.name || null)
+      setVersions(data)
+    })
+    .catch(err => {
+      console.error('Error retrieving versions:', err);
+      setLoading(false);
+    })
+  }, [gameId])
+
   // Get platforms
   useEffect(() => {
     fetch(`http://localhost:3001/api/platforms/${gameId}`)
     .then(res => res.json())
     .then(data => {
       console.log("Platforms:", data)
-      setSelectedPlatform(data[0].name)
+      setSelectedPlatform(data[0]?.name || null)
       setPlatforms(data)
     })
     .catch(err => {
       console.error('Error retrieving platforms:', err);
       setLoading(false);
     })
-  }, [])
+  }, [gameId])
 
   //Get game name if not set
   useEffect(() => {
@@ -147,28 +182,52 @@ function AchievementsList() {
   return (
     <div className="px-10">
   
-      {/* Platform Selector */}
-      <div className="mx-auto mt-8 bg-surface/70 border border-accent/20 rounded-2xl shadow-lg shadow-accent/10 p-4">
+    {/* Version Selector */}
+    <div className="mx-auto mt-8 bg-surface/70 border border-accent/20 rounded-2xl shadow-lg shadow-accent/10 p-4">
       <h2 className="text-center text-3xl text-accent px-4 py-4">{gameName}</h2>
-        <div className="flex justify-center gap-2 mb-4">
-          {platforms.map(p => (
+
+      <div className="flex justify-center mb-4 bg-surface rounded-lg shadow-inner border border-accent/20 overflow-hidden">
+        {versions.map((v, index) => (
+          <button
+            key={v.id}
+            name={v.id}
+            value={v.name}
+            onClick={handleVersionClick}
+            className={`
+              flex-1 px-4 py-2 text-sm sm:text-base font-semibold tracking-wide transition-all duration-200
+              ${selectedVersion === v.name
+                ? 'bg-accentAlt text-background shadow-inner'
+                : 'bg-surface text-accent hover:bg-accent/10 hover:text-accentAlt'}
+              ${index === 0 ? 'rounded-l-lg' : index === versions.length - 1 ? 'rounded-r-lg' : ''}
+            `}
+          >
+            {v.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Platform Selector */}
+      {platforms.length > 0 && (
+        <div className="flex justify-center mb-4 bg-surface rounded-lg shadow-inner border border-accent/20 overflow-hidden">
+          {platforms.map((p, index) => (
             <button
               key={p.id}
               name={p.id}
               value={p.name}
-              onClick={handleClick}
+              onClick={handlePlatformClick}
               className={`
-                flex-1 px-3 py-2 text-sm sm:text-base tracking-wide font-bold rounded-lg
-                border transition-all duration-200
+                flex-1 px-4 py-2 text-sm sm:text-base font-semibold tracking-wide transition-all duration-200
                 ${selectedPlatform === p.name
-                  ? 'bg-accentAlt text-background border-accentAlt shadow-lg shadow-accentAlt/30'
-                  : 'bg-surface text-accent border-accent/30 hover:border-accent/80 hover:bg-accent/10'}
+                  ? 'bg-accentAlt text-background shadow-inner'
+                  : 'bg-surface text-accent hover:bg-accent/10 hover:text-accentAlt'}
+                ${index === 0 ? 'rounded-l-lg' : index === platforms.length - 1 ? 'rounded-r-lg' : ''}
               `}
             >
               {p.name}
             </button>
           ))}
         </div>
+      )}
   
         {/* Expand / Collapse Controls */}
         <div className="flex justify-center gap-4 mb-6">
@@ -201,9 +260,14 @@ function AchievementsList() {
         {/* Achievements List */}
         <ul className="space-y-4">
         {achievements
-          .filter(a => a.platforms.some(p => p.name === selectedPlatform))
+          .filter(a => {
+            // Filter by selected platform if one is selected
+            if (!selectedPlatform) return true;
+            return a.platforms && a.platforms.some(p => p && p.name === selectedPlatform);
+          })
           .map(a => {
             const isExpanded = expandedAchievements[a.id];
+            
             return (
               <li
                 key={a.id}
@@ -268,7 +332,7 @@ function AchievementsList() {
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="px-5 py-4 border-t border-accent/20 bg-surface/90 space-y-1 text-sm text-text">
+                  <div className="px-5 py-4 border-t border-accent/20 bg-surface/90 space-y-3 text-sm text-text">
                     {a.description && <p><strong>Description:</strong> {a.description}</p>}
 
                     {a.warning && (
@@ -278,7 +342,10 @@ function AchievementsList() {
                           <>
                             {a.warning}{' '}
                             <button
-                              onClick={() => toggleWarning(a.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleWarning(a.id);
+                              }}
                               className="text-accentAlt underline hover:text-accent"
                             >
                               Hide
@@ -286,7 +353,10 @@ function AchievementsList() {
                           </>
                         ) : (
                           <button
-                            onClick={() => toggleWarning(a.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleWarning(a.id);
+                            }}
                             className="text-accentAlt underline hover:text-accent"
                           >
                             Show
@@ -312,10 +382,13 @@ function AchievementsList() {
       </div>
   
       {/* Delete Modal */}
-      {showModal && (
+      {showModal && selectedAchievement && (
         <DeleteModal
-          itemName={selectedQuest.title}
-          onConfirm={handleDelete}
+          itemName={selectedAchievement.name}
+          onConfirm={() => {
+            // TODO: Implement delete functionality for achievements
+            setShowModal(false);
+          }}
           onCancel={() => setShowModal(false)}
         />
       )}
