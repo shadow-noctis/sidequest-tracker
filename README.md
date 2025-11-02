@@ -5,29 +5,33 @@
 
 # Features
 - List quests by game
-- login
-- Mark quests done (Only logged in users)
+- List achievements by game
+- Toggle achievements based on platform
+- login / logout
+- Mark quests done/undone (Only logged in users)
 - Admin feature: add, delete, edit
+- Import quests/achievemments using JSON file
+- Helpful tip (viewed only after clicking)
 
 ## Planned features
-- Helpful tip (viewed only by request)
-- Addition of achievements
-- Add toggle between platforms
-- Option to edit games and platforms (admin only)
 - Request new game (form)
+- User profile
+- Edit user rights (admin only)
+- Proper registration (require email verification)
 
 ## Tech Stack
 - **Frontend**: React + Vite
 - **Backend**: Node.js
 
 ## Status
-🚧 Simple version functional with minor bugs
+🚧 Simple version functional. Possible minor bugs
 
 ## Setup
 1. Clone this repo
 2. Install dependencies for frontend and backend:
    ```cd frontend && npm install```
    ```cd ../backend && npm install```
-3. Run back end:
+3. Run Backend
    ```node server.js```
+4. Run Frontend
    ```npm run dev```
